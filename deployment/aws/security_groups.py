@@ -28,45 +28,68 @@ def delete_security_group(ec2: ServiceResource, name: str):
 
 def create_security_group(ec2: ServiceResource, name: str) -> SecurityGroup:
     logging.info(f'Creating security group "{name}"...')
+    security_group = get_security_group(ec2, name)
+    if security_group is not None:
+        logging.info(f'  Already exist.')
+        return security_group
     security_group: SecurityGroup = ec2.create_security_group(
         GroupName=name, 
-        Description='Default TP1 security group')
-    security_group.authorize_ingress(
-        IpPermissions=[
-            {'IpProtocol': 'tcp',
-             'FromPort': 80,
-             'ToPort': 80,
-             'IpRanges': [{'CidrIp': '0.0.0.0/0'}]},
-            {'IpProtocol': 'tcp',
-             'FromPort': 443,
-             'ToPort': 443,
-             'IpRanges': [{'CidrIp': '0.0.0.0/0'}]},
-            {'IpProtocol': 'tcp',
-             'FromPort': 22,
-             'ToPort': 22,
-             'IpRanges': [{'CidrIp': '0.0.0.0/0'}]},
-            {'IpProtocol': '-1',
-             'FromPort': -1,
-             'ToPort': -1,
-             'UserIdGroupPairs': [{ 'GroupId': security_group.group_id }]
-            }
-        ]
+        Description='N/A'
     )
+    logging.info(f'  Created.')
     return security_group
 
-def add_ssh_rules(security_group: SecurityGroup):
+def add_tcp_rule(security_group: SecurityGroup, port: int):
     for ip_permission in security_group.ip_permissions:
         if ip_permission.get('IpProtocol') == 'tcp' and \
-           ip_permission.get('FromPort') == 22 and \
-           ip_permission.get('ToPort') == 22:
+           ip_permission.get('FromPort') == port and \
+           ip_permission.get('ToPort') == port:
+            logging.info(f'  Rule already exist.')
             return
     security_group.authorize_ingress(
         IpPermissions=[
             {
                 'IpProtocol': 'tcp',
-                'FromPort': 22,
-                'ToPort': 22,
+                'FromPort': port,
+                'ToPort': port,
                 'IpRanges': [{'CidrIp': '0.0.0.0/0'}]
             }
         ]
     )
+    logging.info(f'  Rule added.')
+
+def add_ssh_rule(security_group: SecurityGroup):
+    logging.info(f'{security_group.group_name}: Allowing SSH traffic...')
+    add_tcp_rule(security_group, 22)
+
+def add_http_rule(security_group: SecurityGroup):
+    logging.info(f'{security_group.group_name}: Allowing HTTP traffic...')
+    add_tcp_rule(security_group, 80)
+
+def add_https_rule(security_group: SecurityGroup):
+    logging.info(f'{security_group.group_name}: Allowing HTTPS traffic...')
+    add_tcp_rule(security_group, 443)
+
+def add_sg_rule(security_group: SecurityGroup, from_security_group: SecurityGroup):
+    logging.info(f'{security_group.group_name}: Allowing all traffic from "{from_security_group.group_name}"...')
+    for ip_permission in security_group.ip_permissions:
+        if ip_permission.get('IpProtocol') == '-1' and \
+           ip_permission.get('FromPort') is None and \
+           ip_permission.get('ToPort') is None and \
+           ip_permission.get('UserIdGroupPairs') is not None:
+            for user_id_group_pair in ip_permission.get('UserIdGroupPairs'):
+                if user_id_group_pair['GroupId'] == from_security_group.group_id:
+                    logging.info(f'  Rule already exist.')
+                    return
+    security_group.authorize_ingress(
+        IpPermissions=[
+            {
+                'IpProtocol': '-1',
+                'FromPort': -1,
+                'ToPort': -1,
+                'UserIdGroupPairs': [{ 'GroupId': from_security_group.group_id }]
+            }
+        ],
+    )
+    logging.info(f'  Rule added.')
+    return

@@ -49,18 +49,32 @@ def deploy() -> ec2Instance:
     aws.instances.delete_all_instances(ec2_service_resource)
 
     # Create/edit the security group
-    security_group = aws.security_groups.get_security_group(ec2_service_resource, 'default')
-    aws.security_groups.add_ssh_rules(security_group)
+    master_security_group = aws.security_groups.create_security_group(ec2_service_resource, '2018968-master')
+    slaves_security_group = aws.security_groups.create_security_group(ec2_service_resource, '2018968-slaves')
+
+    # Allow SSH from anywhere
+    aws.security_groups.add_ssh_rule(master_security_group)
+    aws.security_groups.add_ssh_rule(slaves_security_group)
+
+    # Allow HTTP and HTTPS to master
+    aws.security_groups.add_http_rule(master_security_group)
+    aws.security_groups.add_https_rule(master_security_group)
+
+    # Allow packets from the same security group
+    aws.security_groups.add_sg_rule(slaves_security_group, slaves_security_group)
+    aws.security_groups.add_sg_rule(master_security_group, master_security_group)
+
+    # Allow packets from the master to slaves
+    aws.security_groups.add_sg_rule(slaves_security_group, master_security_group)
+
 
     # Create Slaves instances (must be created before the Master)
     slaves_instances = aws.instances.create_instances(
         ec2_service_resource,
         ec2_client,
         INSTANCE_INFOS['slaves'],
-        security_group
+        slaves_security_group
     )
-    #for slave_instance in slaves_instances:
-    #    aws.instances.wait_for_initialized(ec2_client, slave_instance)
 
     # Create the Master instance
     slave_hostnames = []
@@ -70,10 +84,14 @@ def deploy() -> ec2Instance:
         ec2_service_resource,
         ec2_client,
         INSTANCE_INFOS['master'],
-        security_group,
+        master_security_group,
         slave_hostnames
     )[0]
+
+    # Wait for initializations
     aws.instances.wait_for_initialized(ec2_client, master_instance)
+    for slave_instance in slaves_instances:
+        aws.instances.wait_for_initialized(ec2_client, slave_instance)
 
     
 
@@ -100,5 +118,5 @@ def start():
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO, format='%(levelname)s - %(message)s')
-    #deploy()
-    start()
+    deploy()
+    #start()

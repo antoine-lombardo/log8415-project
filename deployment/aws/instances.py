@@ -1,4 +1,4 @@
-import os, logging
+import os, logging, time
 from typing import Dict, List
 import boto3
 from boto3_type_annotations.ec2 import ServiceResource, SecurityGroup, Instance, waiter, Client
@@ -46,6 +46,7 @@ def create_instances(ec2: ServiceResource, ec2_client: Client, instances_infos: 
         },
         SecurityGroupIds=[security_group.id]
     )
+    time.sleep(1)
 
     for i in range(n):
         logging.info('  {}: Created.'.format(names[i]))
