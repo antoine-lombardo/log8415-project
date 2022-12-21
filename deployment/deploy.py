@@ -110,7 +110,7 @@ def start():
     logging.info(requests.get('http://{}/slaves/0/start'.format(master.public_dns_name), timeout=60).text)
     logging.info(requests.get('http://{}/slaves/1/start'.format(master.public_dns_name), timeout=60).text)
     logging.info(requests.get('http://{}/slaves/2/start'.format(master.public_dns_name), timeout=60).text)
-
+    
 
     
 
