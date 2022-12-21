@@ -96,3 +96,12 @@ def retrieve_instances(ec2: ServiceResource) -> List[Instance]:
         if instance.state['Name'] != 'terminated':
             instances.append(instance)
     return instances
+
+def retrieve_instance(ec2: ServiceResource, name: str) -> List[Instance]:
+    instances = []
+    for instance in ec2.instances.all():
+        if instance.state['Name'] != 'terminated':
+            for tag in instance.tags:
+                if tag['Key'] == 'Name' and tag['Value'] == name:
+                    return instance
+    return None

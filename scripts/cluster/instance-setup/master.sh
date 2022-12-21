@@ -1,9 +1,9 @@
 #!/bin/bash
 
-master_hostname=$1
-slave1_hostname=$2
-slave2_hostname=$3
-slave3_hostname=$4
+master_hostname=$(hostname -f)
+slave1_hostname=$0
+slave2_hostname=$1
+slave3_hostname=$2
 
 ./setup/install-mysql-cluster-common.sh
 
