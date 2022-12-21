@@ -36,6 +36,16 @@ logging.getLogger('waitress').setLevel(logging.INFO)
 
 
 # --------------------------------------------------------------------------- #
+# OUTPUT SESSION INFOS                                                        #
+# --------------------------------------------------------------------------- #
+app.logger.info(f'App started in mode: {APP_MODE}')
+if APP_MODE == 'MASTER':
+    app.logger.info(f'Slave 1 hostname: {SLAVES[0]}')
+    app.logger.info(f'Slave 2 hostname: {SLAVES[1]}')
+    app.logger.info(f'Slave 3 hostname: {SLAVES[2]}')
+
+
+# --------------------------------------------------------------------------- #
 # UTILS                                                                       #
 # --------------------------------------------------------------------------- #
 
