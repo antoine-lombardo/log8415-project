@@ -1,0 +1,36 @@
+Content-Type: multipart/mixed; boundary="//"
+MIME-Version: 1.0
+
+--//
+Content-Type: text/cloud-config; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: attachment; filename="cloud-config.txt"
+
+#cloud-config
+cloud_final_modules:
+- [scripts-user, always]
+
+--//
+Content-Type: text/x-shellscript; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: attachment; filename="userdata.txt"
+
+#!/bin/bash
+
+# Allow SSH username/password login
+#echo 'ubuntu:log8430' | chpasswd
+#sudo sed -i "/^[^#]*PasswordAuthentication[[:space:]]no/c\PasswordAuthentication yes" /etc/ssh/sshd_config
+#service sshd restart
+
+# Install the scripts
+git clone https://github.com/antoine-lombardo/log8415-project.git
+cp -r log8415-project/scripts /scripts
+chmod -R 777 /scripts
+rm -rf log8415-project
+
+# Run the instance setup script
+./scripts/{instance_setup_script} {instance_setup_args}
+
+--//
