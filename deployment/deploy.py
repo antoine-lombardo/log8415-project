@@ -13,7 +13,7 @@ MASTER_INSTANCE = {}
 INSTANCE_INFOS = {
     'standalone':
     {
-        'names': ['i-standalone'],
+        'names': ['io-standalone'],
         'type': 't2.micro', 
         'zone': 'us-east-1a', 
         'image_id': 'ami-0574da719dca65348',
@@ -21,7 +21,7 @@ INSTANCE_INFOS = {
     },
     'master':
     {
-        'names': ['i-master'],
+        'names': ['io-master'],
         'type': 't2.micro', 
         'zone': 'us-east-1a', 
         'image_id': 'ami-0574da719dca65348',
@@ -29,7 +29,7 @@ INSTANCE_INFOS = {
     },
     'slaves':
     {
-        'names': ['i-slave1', 'i8-slave2', 'i-slave3'],
+        'names': ['io-slave1', 'io-slave2', 'io-slave3'],
         'type': 't2.micro', 
         'zone': 'us-east-1a', 
         'image_id': 'ami-0574da719dca65348',
@@ -49,8 +49,8 @@ def deploy() -> ec2Instance:
     aws.instances.delete_all_instances(ec2_service_resource)
 
     # Create/edit the security group
-    master_security_group = aws.security_groups.create_security_group(ec2_service_resource, 'sg-master')
-    slaves_security_group = aws.security_groups.create_security_group(ec2_service_resource, 'sg-slaves')
+    master_security_group = aws.security_groups.create_security_group(ec2_service_resource, 'sgo-master')
+    slaves_security_group = aws.security_groups.create_security_group(ec2_service_resource, 'sgo-slaves')
 
     # Allow SSH from anywhere
     aws.security_groups.add_ssh_rule(master_security_group)
