@@ -73,7 +73,13 @@ def wait_for_running(instance: Instance):
     instance.wait_until_running()
 
 def wait_for_initialized(client: Client, instance: Instance):
-    logging.info('  {}: Waiting for initialization...'.format(instance.id))
+    name = instance.id
+    for tag in instance.tags:
+        if tag['Key'] == 'Name':
+            name = tag['Value']
+            break
+
+    logging.info('  {}: Waiting for initialization...'.format(name))
     system_status_ok_waiter = client.get_waiter('system_status_ok')
     system_status_ok_waiter.wait(
         InstanceIds=[instance.id], 
@@ -89,7 +95,7 @@ def wait_for_initialized(client: Client, instance: Instance):
             'MaxAttempts': 60
         })
     instance.load()
-    logging.info('  {}: Initialized.'.format(instance.id))
+    logging.info('  {}: Initialized.'.format(name))
 
 def retrieve_instances(ec2: ServiceResource) -> List[Instance]:
     instances = []

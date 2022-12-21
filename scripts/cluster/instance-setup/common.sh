@@ -8,5 +8,4 @@ chmod -R 777 /opt/mysqlcluster/home/mysqlc
 echo 'export MYSQLC_HOME=/opt/mysqlcluster/home/mysqlc' > /etc/profile.d/mysqlc.sh
 echo 'export PATH=$MYSQLC_HOME/bin:$PATH' >> /etc/profile.d/mysqlc.sh
 source /etc/profile.d/mysqlc.sh
-apt-get update
-apt-get -y install libncurses5
+apt -y install libncurses5

@@ -107,8 +107,9 @@ def start():
         slaves.append(aws.instances.retrieve_instance(ec2_service_resource, slave_name))
 
     # Start the Slaves
-    for slave in slaves:
-        requests.get('http://{}/start'.format(slave.public_dns_name))
+    logging.info(requests.get('http://{}/slaves/0/start'.format(master.public_dns_name), timeout=60).text)
+    logging.info(requests.get('http://{}/slaves/1/start'.format(master.public_dns_name), timeout=60).text)
+    logging.info(requests.get('http://{}/slaves/2/start'.format(master.public_dns_name), timeout=60).text)
 
 
     

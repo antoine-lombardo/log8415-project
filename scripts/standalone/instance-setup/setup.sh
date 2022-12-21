@@ -1,5 +1,7 @@
 #!/bin/bash
 
+export APP_MODE=STANDALONE
+
 apt-get update
 apt-get install mysql-server sysbench -y
 mkdir /shared

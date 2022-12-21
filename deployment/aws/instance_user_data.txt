@@ -27,10 +27,12 @@ Content-Disposition: attachment; filename="userdata.txt"
 # Install the scripts
 git clone https://github.com/antoine-lombardo/log8415-project.git
 cp -r log8415-project/scripts /scripts
+cp -r log8415-project/flask_app /app
 chmod -R 777 /scripts
+chmod -R 777 /app
 rm -rf log8415-project
 
 # Run the instance setup script
-./scripts/{instance_setup_script} {instance_setup_args}
+source /scripts/{instance_setup_script} {instance_setup_args}
 
 --//
