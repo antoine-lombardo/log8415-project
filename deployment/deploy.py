@@ -119,6 +119,8 @@ def deploy() -> ec2Instance:
     # Create the Proxy instance
     cluster_hostnames = slave_hostnames
     cluster_hostnames.append(master_instance.private_dns_name)
+    cluster_hostnames.append(master_instance.public_dns_name)
+    cluster_hostnames.append(stdaln_instance.public_dns_name)
     master_instance = aws.instances.create_instances(
         ec2_service_resource,
         ec2_client,

@@ -1,8 +1,15 @@
 from app import app, SLAVES, HOSTNAME
 import utils, subprocess, time
 
+
+app.logger.info( '------------ Private hostnames ------------')
+app.logger.info(f'Slave 1 hostname: {SLAVES[0]}')
+app.logger.info(f'Slave 2 hostname: {SLAVES[1]}')
+app.logger.info(f'Slave 3 hostname: {SLAVES[2]}')
+
+
 @app.route("/start", methods=["GET"])
-def master_start() -> tuple[str, int]:
+def start() -> tuple[str, int]:
     """
 
     Starts the Master node.

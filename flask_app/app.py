@@ -18,6 +18,9 @@ SLAVES = [
     os.environ.get('SLAVE3_HOSTNAME'),
 ]
 MASTER_HOSTNAME = os.environ.get('MASTER_HOSTNAME')
+PUBLIC_MASTER_HOSTNAME     = os.environ.get('PUBLIC_MASTER_HOSTNAME')
+PUBLIC_STANDALONE_HOSTNAME = os.environ.get('PUBLIC_STANDALONE_HOSTNAME')
+
 APP_MODE = os.environ.get('APP_MODE')
 HOSTNAME = subprocess.run(['hostname', '-f'], stdout=subprocess.PIPE).stdout.decode('utf-8')
 
@@ -37,12 +40,6 @@ logging.getLogger('waitress').setLevel(logging.INFO)
 # OUTPUT SESSION INFOS                                                        #
 # --------------------------------------------------------------------------- #
 app.logger.info(f'App started in mode: {APP_MODE}')
-if APP_MODE == 'MASTER' or APP_MODE == 'PROXY':
-    app.logger.info(f'Slave 1 hostname: {SLAVES[0]}')
-    app.logger.info(f'Slave 2 hostname: {SLAVES[1]}')
-    app.logger.info(f'Slave 3 hostname: {SLAVES[2]}')
-if APP_MODE == 'PROXY':
-    app.logger.info(f'Master  hostname: {MASTER_HOSTNAME}')
 
 
 # --------------------------------------------------------------------------- #
