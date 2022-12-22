@@ -86,7 +86,7 @@ def remote_slave_start(slave_id: int) -> tuple[str, int]:
 
 
 @app.route("/start", methods=["GET"])
-def remote_slave_start(slave_id: int) -> tuple[str, int]:
+def master_start() -> tuple[str, int]:
     """
 
     Starts the Master node.

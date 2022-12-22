@@ -46,7 +46,7 @@ def deploy() -> ec2Instance:
     ec2_client: ec2Client = boto3.client('ec2')
 
     # Delete all old objects
-    #aws.instances.delete_all_instances(ec2_service_resource)
+    aws.instances.delete_all_instances(ec2_service_resource)
 
     # Create/edit the security group
     master_security_group = aws.security_groups.create_security_group(ec2_service_resource, 'sgo-master')
@@ -119,7 +119,7 @@ def start():
 
     # Check the cluster status
     response = requests.get('http://{}/status'.format(master.public_dns_name), timeout=60)
-    
+
 
 
     
