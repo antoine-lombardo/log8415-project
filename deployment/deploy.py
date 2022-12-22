@@ -77,7 +77,7 @@ def deploy() -> ec2Instance:
         ec2_client,
         INSTANCE_INFOS['standalone'],
         slaves_security_group
-    )
+    )[0]
 
     # Create Slaves instances (must be created before the Master)
     slaves_instances = aws.instances.create_instances(
