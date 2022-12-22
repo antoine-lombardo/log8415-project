@@ -99,8 +99,48 @@ def master_start() -> tuple[str, int]:
     # Check the current status
     status = utils.get_cluster_status()
 
-    return status, 200
+    # If mgmd is not running, return an error
+    if not status['manager']:
+        return 'mgmd is not running.', 500
 
+    # Ensure slaves are running
+    err = utils.ensure_slaves_are_up(SLAVES, HOSTNAME)
+    if err:
+        return err, 500
+    
+    # Ensure mysqld is running
+    err = utils.ensure_mysqld_is_up(app)
+    if err:
+        return err, 500
+    
+    # No error, everything seems to be running
+    return utils.get_cluster_status(), 200
+
+
+
+@app.route("/benchmark", methods=["GET"])
+def master_start() -> tuple[str, int]:
+    """
+
+    Starts the Master node.
+
+    """
+
+    if APP_MODE != 'MASTER':
+        return 'This request should be sent to the Master node.', 404
+
+    # Check the current status
+    status = utils.get_cluster_status()
+
+    if not status['manager'] or \
+       not status['mysqld'] or \
+       len(status['slaves']) < len(SLAVES) or \
+       not all(status['slaves']):
+        return 'Cluster is not ready to start a benchmark.', 500
+
+    subprocess.run(['/scripts/cluster/benchmark/prepare_db.sh'], stdout=subprocess.PIPE, timeout=15)
+    time.sleep(2)
+    return subprocess.run(['/scripts/cluster/benchmark/run.sh'], stdout=subprocess.PIPE, timeout=60).stdout.decode('utf-8'), 200
 
 
 
