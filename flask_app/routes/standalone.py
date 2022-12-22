@@ -1,5 +1,5 @@
 from flask import Blueprint
-import subprocess, time, consts, logging
+import subprocess, time, utils, logging
 
 
 standalone_bp = Blueprint('standalone', __name__)
@@ -29,4 +29,4 @@ def benchmark() -> tuple[str, int]:
             break
     if start is None or end is None:
         return 'Cannot parse the output of the benchmark.', 500
-    return '\n'.join(lines[start:end]), 200
+    return utils.parse_benchmark(lines), 200

@@ -93,7 +93,7 @@ def deploy() -> ec2Instance:
         ec2_service_resource,
         ec2_client,
         INSTANCE_INFOS['standalone'],
-        slaves_security_group
+        standalone_security_group
     )[0]
 
     # Create Slaves instances (must be created before the Master)

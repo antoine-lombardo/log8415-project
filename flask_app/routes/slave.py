@@ -1,7 +1,7 @@
 from flask import Blueprint
 import subprocess, time
 
-slave_bp = Blueprint('proxy', __name__)
+slave_bp = Blueprint('slave', __name__)
 
 @slave_bp.route("/start/<string:master_hostname>", methods=["GET"])
 def slave_start(master_hostname: str) -> tuple[str, int]:
