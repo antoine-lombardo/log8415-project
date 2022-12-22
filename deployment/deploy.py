@@ -44,7 +44,7 @@ INSTANCE_INFOS = {
         'image_id': 'ami-0574da719dca65348',
         'script': 'proxy/instance-setup/setup.sh'
     },
-    'gtkpr':
+    'gatekeeper':
     {
         'names': ['io-gtkpr'],
         'type': 't2.large', 
@@ -154,7 +154,7 @@ def deploy() -> ec2Instance:
         ec2_service_resource,
         ec2_client,
         INSTANCE_INFOS['gatekeeper'],
-        proxy_security_group,
+        gatekeeper_security_group,
         keypair,
         [proxy_instance.private_dns_name]
     )[0]
@@ -174,18 +174,17 @@ def start():
     ec2_client: ec2Client = boto3.client('ec2')
 
     # Retrieve the instances
-    master = aws.instances.retrieve_instance(ec2_service_resource, INSTANCE_INFOS['master']['names'][0])
-    proxy  = aws.instances.retrieve_instance(ec2_service_resource, INSTANCE_INFOS['proxy']['names'][0])
+    gatekeeper = aws.instances.retrieve_instance(ec2_service_resource, INSTANCE_INFOS['gatekeeper']['names'][0])
 
     # Run the cluster
     logging.info('Starting the cluster...')
     for attempt in range(5):
         try:
-            response = requests.get('http://{}/start'.format(master.public_dns_name), timeout=120)
+            response = requests.get('http://{}/start'.format(gatekeeper.public_dns_name), timeout=120)
         except:
             attempt += 1
             if attempt == 5:
-                logging.error('Master unreachable.')
+                logging.error('Gatekeeper unreachable.')
                 return
             time.sleep(5)
     if response.status_code != 200:
