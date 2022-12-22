@@ -51,7 +51,10 @@ def direct_proxy():
     data = request.get_json()
     query: str = data['query']
     args: List[str] = data.get('args', [])
-    output, dbname = make_query(query, args, 'direct')
+    try:
+        output, dbname = make_query(query, args, 'direct')
+    except Exception as e:
+        return str(e), 500
     return {
         'output': output,
         'node': dbname
@@ -69,7 +72,10 @@ def random_proxy():
     data = request.get_json()
     query: str = data['query']
     args: List[str] = data.get('args', [])
-    output, dbname = make_query(query, args, 'random')
+    try:
+        output, dbname = make_query(query, args, 'random')
+    except Exception as e:
+        return str(e), 500
     return {
         'output': output,
         'node': dbname
@@ -88,7 +94,10 @@ def custom_proxy():
     data = request.get_json()
     query: str = data['query']
     args: List[str] = data.get('args', [])
-    output, dbname = make_query(query, args, 'custom')
+    try:
+        output, dbname = make_query(query, args, 'custom')
+    except Exception as e:
+        return str(e), 500
     return {
         'output': output,
         'node': dbname
@@ -120,23 +129,34 @@ def get_bd(mode: str) -> str:
         return None
 
 def make_query(query:str, args: List, mode: str) -> str:
-    db, name = get_bd(mode)
-    if db is None:
-        return None
-    with open_tunnel(
-      (db, 22),
-      ssh_username='ubuntu',
-      ssh_pkey=PRIVATE_KEY,
-      remote_bind_address=(consts.MASTER_HOSTNAME, 3306),
-      local_bind_address=('0.0.0.0', 3306)) as tunnel:
-        with pymysql.connect(
-          host='localhost', 
-          user='myapp', 
-          password='testpwd', 
-          port=330,
-          charset='utf8mb4',
-          cursorclass=pymysql.cursors.DictCursor) as conn:
-            with conn.cursor() as cursor:
-                cursor.execute(query, args)
-                return cursor.fetchone(), name
-    
+    try:
+        db, name = get_bd(mode)
+        if db is None:
+            raise Exception('No host found to handle this query.')
+    except Exception as e:
+        raise Exception('An error occured while selecting a node to handle the query: ' + str(e))
+    try:
+        with open_tunnel(
+        (db, 22),
+        ssh_username='ubuntu',
+        ssh_pkey=PRIVATE_KEY,
+        remote_bind_address=(consts.MASTER_HOSTNAME, 3306),
+        local_bind_address=('0.0.0.0', 3306)) as tunnel:
+            try:
+                with pymysql.connect(
+                host='localhost', 
+                user='myapp', 
+                password='testpwd', 
+                port=3306,
+                charset='utf8mb4',
+                cursorclass=pymysql.cursors.DictCursor) as conn:
+                    try: 
+                        with conn.cursor() as cursor:
+                            cursor.execute(query, args)
+                            return cursor.fetchone(), name
+                    except Exception as e:
+                        raise Exception('An error occured while executing the query: ' + str(e))
+            except Exception as e:
+                raise Exception('An error occured while connecting to the MySQL server: ' + str(e))
+    except Exception as e:
+        raise Exception('An error occured while connecting to the SSH tunnel: ' + str(e))
