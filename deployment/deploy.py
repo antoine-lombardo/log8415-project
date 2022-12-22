@@ -13,7 +13,7 @@ MASTER_INSTANCE = {}
 INSTANCE_INFOS = {
     'standalone':
     {
-        'names': ['io-standalone'],
+        'names': ['io-stdaln'],
         'type': 't2.micro', 
         'zone': 'us-east-1a', 
         'image_id': 'ami-0574da719dca65348',
@@ -51,7 +51,7 @@ def deploy() -> ec2Instance:
     # Create/edit the security group
     master_security_group     = aws.security_groups.create_security_group(ec2_service_resource, 'sgo-master')
     slaves_security_group     = aws.security_groups.create_security_group(ec2_service_resource, 'sgo-slaves')
-    standalone_security_group = aws.security_groups.create_security_group(ec2_service_resource, 'sgo-standalone')
+    standalone_security_group = aws.security_groups.create_security_group(ec2_service_resource, 'sgo-stdaln')
 
     # Allow SSH from anywhere
     aws.security_groups.add_ssh_rule(master_security_group    )
@@ -71,6 +71,13 @@ def deploy() -> ec2Instance:
     aws.security_groups.add_sg_rule(slaves_security_group, master_security_group)
     aws.security_groups.add_sg_rule(master_security_group, slaves_security_group)
 
+    # Create Slaves instances (must be created before the Master)
+    stdaln_instance = aws.instances.create_instances(
+        ec2_service_resource,
+        ec2_client,
+        INSTANCE_INFOS['standalone'],
+        slaves_security_group
+    )
 
     # Create Slaves instances (must be created before the Master)
     slaves_instances = aws.instances.create_instances(
@@ -96,6 +103,7 @@ def deploy() -> ec2Instance:
     aws.instances.wait_for_initialized(ec2_client, master_instance)
     for slave_instance in slaves_instances:
         aws.instances.wait_for_initialized(ec2_client, slave_instance)
+    aws.instances.wait_for_initialized(ec2_client, stdaln_instance)
 
     
 
