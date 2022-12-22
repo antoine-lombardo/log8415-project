@@ -3,12 +3,27 @@ from typing import Dict, List
 import boto3
 from boto3_type_annotations.ec2 import ServiceResource, SecurityGroup, Instance, waiter, Client
 
+
+
+
+
+# Read the user_data file
 USER_DATA_SCRIPT_FILE = 'instance_user_data.txt'
 dir_path = os.path.dirname(os.path.realpath(__file__))
 with open(os.path.join(dir_path, USER_DATA_SCRIPT_FILE)) as file:
     USER_DATA_SCRIPT = file.read()
 
+
+
+
+
 def delete_all_instances(ec2: ServiceResource):
+    '''
+    Deletes all running instances
+        Parameters:
+            ec2 (ServiceResource): The EC2 service resource object
+    '''
+
     logging.info('Terminating old instances...')
     for instance in ec2.instances.all():
         if instance.state['Name'] != 'terminated':
@@ -17,6 +32,9 @@ def delete_all_instances(ec2: ServiceResource):
         if instance.state['Name'] != 'terminated':
             #instance.wait_until_terminated()
             logging.info('  {}: Terminated.'.format(instance.id))
+
+
+
 
 
 def create_instances(ec2: ServiceResource, ec2_client: Client, instances_infos: Dict[str, str], security_group: SecurityGroup, keypair: Dict, setup_args: List[str] = []) -> List[Instance]:
@@ -160,14 +178,35 @@ def wait_for_initialized(client: Client, instance: Instance):
 
 
 def retrieve_instances(ec2: ServiceResource) -> List[Instance]:
+    '''
+    Retrieves all running instances.
+        Parameters:
+            ec2 (ServiceResource): The EC2 service resource object
+        
+        Returns:
+            instances (List[Instance]): All the running instances
+    '''
+
     instances = []
     for instance in ec2.instances.all():
         if instance.state['Name'] != 'terminated':
             instances.append(instance)
     return instances
 
-def retrieve_instance(ec2: ServiceResource, name: str) -> List[Instance]:
-    instances = []
+
+
+
+
+def retrieve_instance(ec2: ServiceResource, name: str) -> Instance:
+    '''
+    Retrieve the instance with the name provided.
+        Parameters:
+            ec2 (ServiceResource): The EC2 service resource object
+        
+        Returns:
+            instance (Instance): The matching instance, or None
+    '''
+    
     for instance in ec2.instances.all():
         if instance.state['Name'] != 'terminated':
             for tag in instance.tags:
