@@ -49,20 +49,23 @@ def deploy() -> ec2Instance:
     aws.instances.delete_all_instances(ec2_service_resource)
 
     # Create/edit the security group
-    master_security_group = aws.security_groups.create_security_group(ec2_service_resource, 'sgo-master')
-    slaves_security_group = aws.security_groups.create_security_group(ec2_service_resource, 'sgo-slaves')
+    master_security_group     = aws.security_groups.create_security_group(ec2_service_resource, 'sgo-master')
+    slaves_security_group     = aws.security_groups.create_security_group(ec2_service_resource, 'sgo-slaves')
+    standalone_security_group = aws.security_groups.create_security_group(ec2_service_resource, 'sgo-standalone')
 
     # Allow SSH from anywhere
-    aws.security_groups.add_ssh_rule(master_security_group)
-    aws.security_groups.add_ssh_rule(slaves_security_group)
+    aws.security_groups.add_ssh_rule(master_security_group    )
+    aws.security_groups.add_ssh_rule(slaves_security_group    )
+    aws.security_groups.add_ssh_rule(standalone_security_group)
 
-    # Allow HTTP and HTTPS to master
-    aws.security_groups.add_http_rule(master_security_group)
-    aws.security_groups.add_https_rule(master_security_group)
+    # Allow HTTP and HTTPS to master and standalone
+    aws.security_groups.add_http_rule(master_security_group    )
+    aws.security_groups.add_http_rule(standalone_security_group)
 
     # Allow packets from the same security group
-    aws.security_groups.add_sg_rule(slaves_security_group, slaves_security_group)
-    aws.security_groups.add_sg_rule(master_security_group, master_security_group)
+    aws.security_groups.add_sg_rule(slaves_security_group    , slaves_security_group    )
+    aws.security_groups.add_sg_rule(master_security_group    , master_security_group    )
+    aws.security_groups.add_sg_rule(standalone_security_group, standalone_security_group)
 
     # Allow packets from the master to slaves and from slaves to master
     aws.security_groups.add_sg_rule(slaves_security_group, master_security_group)
