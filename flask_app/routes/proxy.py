@@ -48,7 +48,7 @@ def direct_proxy():
 
     """
 
-    data = request.json()
+    data = request.get_json()
     query: str = request.json()['query']
     args: List[str] = data.get('args', [])
     return make_query(query, args, 'direct'), 200
@@ -62,7 +62,7 @@ def random_proxy():
 
     """
 
-    data = request.json()
+    data = request.get_json()
     query: str = request.json()['query']
     args: List[str] = data.get('args', [])
     return make_query(query, args, 'random'), 200
@@ -76,7 +76,7 @@ def custom_proxy():
 
     """
 
-    data = request.json()
+    data = request.get_json()
     query: str = request.json()['query']
     args: List[str] = data.get('args', [])
     return make_query(query, args, 'custom'), 200
@@ -92,7 +92,7 @@ def get_bd(mode: str) -> str:
             'hostname': consts.MASTER_HOSTNAME,
             'latency': pythonping.ping(target=consts.MASTER_HOSTNAME, count=1, timeout=10).rtt_avg
         }
-        for slave in consts.SLAVE:
+        for slave in consts.SLAVES:
             latency = pythonping.ping(target=slave, count=1, timeout=10).rtt_avg
             if latency < db['latency']:
                 db = {
