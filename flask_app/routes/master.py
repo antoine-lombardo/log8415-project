@@ -33,6 +33,11 @@ def start() -> tuple[str, int]:
     err = utils.ensure_mysqld_is_up()
     if err:
         return err, 500
+
+    # Clean database
+    err = utils.clean_db()
+    if err:
+        return err, 500
     
     # No error, everything seems to be running
     return utils.get_cluster_status(), 200

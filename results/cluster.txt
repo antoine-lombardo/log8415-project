@@ -1,25 +1,35 @@
-SQL statistics:
-    queries performed:
-        read:                            181440
-        write:                           51801
-        other:                           25904
-        total:                           259145
-    transactions:                        12944  (215.63 per sec.)
-    queries:                             259145 (4317.09 per sec.)
-    ignored errors:                      16     (0.27 per sec.)
-    reconnects:                          0      (0.00 per sec.)
-
-General statistics:
-    total time:                          60.0255s
-    total number of events:              12944
-
-Latency (ms):
-         min:                                   10.05
-         avg:                                   27.81
-         max:                                   98.55
-         95th percentile:                       36.89
-         sum:                               360012.12
-
-Threads fairness:
-    events (avg/stddev):           2157.3333/10.14
-    execution time (avg/stddev):   60.0020/0.01
+{
+    "general_statistics": {
+        "total_number_of_events": 24905,
+        "total_time": 60.0117
+    },
+    "latency": {
+        "95th_percentile": 20.37,
+        "avg": 14.45,
+        "max": 167.98,
+        "min": 3.85,
+        "sum": 359931.58
+    },
+    "sql_statistics": {
+        "ignored_errors": 17,
+        "ignored_errors_per_sec": 0.28,
+        "queries": 498380,
+        "queries_per_sec": 8304.45,
+        "queries_performed": {
+            "other": 49827,
+            "read": 348908,
+            "total": 498380,
+            "write": 99645
+        },
+        "reconnects": 0,
+        "reconnects_per_sec": 0.0,
+        "transactions": 24905,
+        "transactions_per_sec": 414.99
+    },
+    "threads_fairness": {
+        "events_avg": 4150.8333,
+        "events_stddev": 6.47,
+        "execution_time_avg": 59.9886,
+        "execution_time_stddev": 0.0
+    }
+}

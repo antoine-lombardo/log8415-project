@@ -1,6 +1,6 @@
 from typing import Dict, List
 from flask import request
-import subprocess, requests, time, logging
+import subprocess, requests, time, logging, pythonping
 
 
 def base_url() -> str:
@@ -97,6 +97,14 @@ def ensure_mysqld_is_up():
         except:
             subprocess.run(['killall', 'mysqld'], stdout=subprocess.PIPE)
             return 'Failed to create the database user.'
+    return None
+
+def clean_db():
+    try:
+        logging.info('Cleaning database...')
+        subprocess.run(['/scripts/cluster/benchmark/clean_db.sh'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=20)
+    except:
+        return 'Failed to clean database.'
     return None
 
 def parse_benchmark(lines: List[str]) -> Dict:
@@ -196,3 +204,9 @@ def parse_benchmark(lines: List[str]) -> Dict:
                 output['threads_fairness']['execution_time_avg'] = float(sub_line[0])
                 output['threads_fairness']['execution_time_stddev'] = float(sub_line[1])
     return output
+
+
+
+def ping(hostname: str):
+    result = pythonping.ping(target=hostname, count=1, timeout=10)
+    return result.rtt_avg

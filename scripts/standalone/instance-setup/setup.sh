@@ -37,5 +37,6 @@ echo "$SECURE_MYSQL"
 mysql -uroot -ptestpwd -e "DROP USER 'myapp'@'%';"
 mysql -uroot -ptestpwd -e "CREATE USER 'myapp'@'%' IDENTIFIED WITH mysql_native_password BY 'testpwd';"
 mysql -uroot -ptestpwd -e "GRANT ALL PRIVILEGES ON *.* TO 'myapp'@'%';"
+source /scripts/standalone/benchmark/clean_db.sh
 
 source /scripts/common-setup-after.sh
