@@ -1,4 +1,4 @@
-import os, logging, requests, utils, subprocess
+import os, logging, requests, utils, subprocess, time
 from flask import Flask, request
 
 
@@ -85,6 +85,24 @@ def remote_slave_start(slave_id: int) -> tuple[str, int]:
 
 
 
+@app.route("/start", methods=["GET"])
+def remote_slave_start(slave_id: int) -> tuple[str, int]:
+    """
+
+    Starts the Master node.
+
+    """
+
+    if APP_MODE != 'MASTER':
+        return 'This request should be sent to the Master node.', 404
+
+    # Check the current status
+    status = utils.get_cluster_status()
+
+    return status, 200
+
+
+
 
 
 # --------------------------------------------------------------------------- #
@@ -102,9 +120,26 @@ def slave_start(master_hostname: str) -> tuple[str, int]:
     if APP_MODE != 'SLAVE':
         return 'This request should be sent to a Slave node.', 404
 
-    output = subprocess.run(['/scripts/cluster/start/slave.sh', master_hostname], stdout=subprocess.PIPE).stdout.decode('utf-8')
+    subprocess.run(['killall', 'ndbd'], stdout=subprocess.PIPE)
+    time.sleep(1)
+    output = subprocess.run(['/scripts/cluster/setup/slave/start_ndbd.sh', master_hostname], stdout=subprocess.PIPE, timeout=10).stdout.decode('utf-8')
+    response = {
+        'connected': False,
+        'node_id': -1,
+        'timed_out': True
+    }
+    for line in output.split('\n'):
+        if 'Angel connected to' in line:
+            response['connected'] = True
+            response['timed_out'] = False
+        elif 'Angel allocated nodeid: ' in line:
+            response['node_id'] = int(line[line.index('Angel allocated nodeid: ') + 24:].strip())
+            response['timed_out'] = False
     
-    return output, 200
+    if response['timed_out']:
+        return response, 500
+    else:
+        return response, 200
 
 
 

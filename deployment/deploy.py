@@ -46,7 +46,7 @@ def deploy() -> ec2Instance:
     ec2_client: ec2Client = boto3.client('ec2')
 
     # Delete all old objects
-    aws.instances.delete_all_instances(ec2_service_resource)
+    #aws.instances.delete_all_instances(ec2_service_resource)
 
     # Create/edit the security group
     master_security_group = aws.security_groups.create_security_group(ec2_service_resource, 'sgo-master')
@@ -66,7 +66,7 @@ def deploy() -> ec2Instance:
 
     # Allow packets from the master to slaves and from slaves to master
     aws.security_groups.add_sg_rule(slaves_security_group, master_security_group)
-    aws.security_groups.add_sg_rule(slaves_security_group, master_security_group)
+    aws.security_groups.add_sg_rule(master_security_group, slaves_security_group)
 
 
     # Create Slaves instances (must be created before the Master)
@@ -108,9 +108,18 @@ def start():
         slaves.append(aws.instances.retrieve_instance(ec2_service_resource, slave_name))
 
     # Start the Slaves
-    logging.info(requests.get('http://{}/slaves/0/start'.format(master.public_dns_name), timeout=60).text)
-    logging.info(requests.get('http://{}/slaves/1/start'.format(master.public_dns_name), timeout=60).text)
-    logging.info(requests.get('http://{}/slaves/2/start'.format(master.public_dns_name), timeout=60).text)
+    for i in range(len(INSTANCE_INFOS['slaves']['names'])):
+        logging.info(f'Starting Data Node on "{INSTANCE_INFOS["slaves"]["names"][i]}"')
+        response = requests.get('http://{}/slaves/{}/start'.format(master.public_dns_name, i), timeout=60)
+        data = response.json()
+        if response.status_code != 200 or not data['connected']:
+            logging.error('Unable to start Data Node.')
+            logging.error(f'Response from Master: {response.text}')
+        logging.info(f'  Started as Node ID {data["node_id"]}')
+
+    # Check the cluster status
+    response = requests.get('http://{}/status'.format(master.public_dns_name), timeout=60)
+    
 
 
     
