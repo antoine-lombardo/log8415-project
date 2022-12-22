@@ -69,6 +69,10 @@ elif consts.APP_MODE == 'PROXY':
     from routes.proxy import proxy_bp
     app.register_blueprint(proxy_bp)
 
+elif consts.APP_MODE == 'GATEKEEPER':
+    from routes.gatekeeper import gtkpr_bp
+    app.register_blueprint(gtkpr_bp)
+
 
 # Start in production mode
 if __name__ == "__main__":

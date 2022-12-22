@@ -43,6 +43,14 @@ INSTANCE_INFOS = {
         'zone': 'us-east-1a', 
         'image_id': 'ami-0574da719dca65348',
         'script': 'proxy/instance-setup/setup.sh'
+    },
+    'gtkpr':
+    {
+        'names': ['io-gtkpr'],
+        'type': 't2.large', 
+        'zone': 'us-east-1a', 
+        'image_id': 'ami-0574da719dca65348',
+        'script': 'gatekeeper/instance-setup/setup.sh'
     }
 }
 
@@ -62,29 +70,34 @@ def deploy() -> ec2Instance:
     slaves_security_group     = aws.security_groups.create_security_group(ec2_service_resource, 'sgo-slaves')
     proxy_security_group      = aws.security_groups.create_security_group(ec2_service_resource, 'sgo-proxy' )
     standalone_security_group = aws.security_groups.create_security_group(ec2_service_resource, 'sgo-stdaln')
+    gatekeeper_security_group = aws.security_groups.create_security_group(ec2_service_resource, 'sgo-gtkpr')
 
     # Allow SSH from anywhere
     aws.security_groups.add_ssh_rule(master_security_group    )
     aws.security_groups.add_ssh_rule(slaves_security_group    )
     aws.security_groups.add_ssh_rule(proxy_security_group     )
     aws.security_groups.add_ssh_rule(standalone_security_group)
+    aws.security_groups.add_ssh_rule(gatekeeper_security_group)
 
-    # Allow HTTP and HTTPS to master and standalone
-    aws.security_groups.add_http_rule(master_security_group    )
-    aws.security_groups.add_http_rule(proxy_security_group     )
-    aws.security_groups.add_http_rule(standalone_security_group)
+    # Allow HTTP to gatekeeper only
+    aws.security_groups.add_http_rule(gatekeeper_security_group)
 
     # Allow packets from the same security group
     aws.security_groups.add_sg_rule(slaves_security_group    , slaves_security_group    )
     aws.security_groups.add_sg_rule(master_security_group    , master_security_group    )
     aws.security_groups.add_sg_rule(proxy_security_group     , proxy_security_group     )
     aws.security_groups.add_sg_rule(standalone_security_group, standalone_security_group)
+    aws.security_groups.add_sg_rule(gatekeeper_security_group, gatekeeper_security_group)
 
-    # Allow packets from the proxy to master and slaves
-    aws.security_groups.add_sg_rule(master_security_group, proxy_security_group)
-    aws.security_groups.add_sg_rule(slaves_security_group, proxy_security_group)
+    # Allow Gatekeeper -> Proxy
+    aws.security_groups.add_sg_rule(proxy_security_group, gatekeeper_security_group)
 
-    # Allow packets from the master to slaves and from slaves to master
+    # Allow Proxy -> Master, Proxy -> Slaves and Proxy -> Standalone
+    aws.security_groups.add_sg_rule(master_security_group,     proxy_security_group)
+    aws.security_groups.add_sg_rule(slaves_security_group,     proxy_security_group)
+    aws.security_groups.add_sg_rule(standalone_security_group, proxy_security_group)
+
+    # Allow Master -> Slaves and Slaves -> Master
     aws.security_groups.add_sg_rule(slaves_security_group, master_security_group)
     aws.security_groups.add_sg_rule(master_security_group, slaves_security_group)
 
@@ -126,7 +139,7 @@ def deploy() -> ec2Instance:
     cluster_hostnames = slave_hostnames
     cluster_hostnames.append(master_instance.private_dns_name)
     cluster_hostnames.append(master_instance.public_dns_name)
-    cluster_hostnames.append(stdaln_instance.public_dns_name)
+    cluster_hostnames.append(stdaln_instance.private_dns_name)
     proxy_instance = aws.instances.create_instances(
         ec2_service_resource,
         ec2_client,
@@ -134,6 +147,16 @@ def deploy() -> ec2Instance:
         proxy_security_group,
         keypair,
         cluster_hostnames
+    )[0]
+
+    # Create the Gatekeeper instance
+    proxy_instance = aws.instances.create_instances(
+        ec2_service_resource,
+        ec2_client,
+        INSTANCE_INFOS['gatekeeper'],
+        proxy_security_group,
+        keypair,
+        [proxy_instance.private_dns_name]
     )[0]
 
     # Wait for initializations

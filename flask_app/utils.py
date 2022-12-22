@@ -1,6 +1,7 @@
 from typing import Dict, List
 from flask import request
-import subprocess, requests, time, logging, os, json, paramiko, io
+import subprocess, requests, time, logging, os, json, paramiko, io, sqlparse
+
 
 
 def base_url() -> str:
@@ -214,3 +215,16 @@ def load_private_key(name: str) -> str:
         keypair = json.load(file)
     return paramiko.RSAKey.from_private_key(io.StringIO(keypair['KeyMaterial']))
 
+def is_valid_query(query: str) -> bool:
+    try:
+        sqlparse.parse(query)
+        return True
+    except:
+        return False
+
+def is_write_query(query: str) -> bool:
+    parsed_queries = sqlparse.parse(query)
+    for parsed_query in parsed_queries:
+        if parsed_query.get_type() in ('INSERT', 'UPDATE', 'DELETE', 'CREATE', 'ALTER', 'DROP', 'TRUNCATE'):
+            return True
+    return False

@@ -1,6 +1,6 @@
 from typing import List
 from flask import redirect, Blueprint, request
-import logging, consts, pymysql, random, utils, pythonping, pymysql.cursors
+import logging, consts, pymysql, random, utils, pythonping, pymysql.cursors, requests
 from sshtunnel import open_tunnel
 
 logging.info( '------------ Private hostnames ------------')
@@ -8,10 +8,7 @@ logging.info(f'Master hostname:  {consts.MASTER_HOSTNAME}')
 logging.info(f'Slave 1 hostname: {consts.SLAVES[0]}')
 logging.info(f'Slave 2 hostname: {consts.SLAVES[1]}')
 logging.info(f'Slave 3 hostname: {consts.SLAVES[2]}')
-
-logging.info( '------------ Public hostnames ------------')
-logging.info(f'Stdaln hostname: {consts.PUBLIC_STANDALONE_HOSTNAME}')
-logging.info(f'Master hostname: {consts.PUBLIC_MASTER_HOSTNAME}')
+logging.info(f'Stdaln  hostname: {consts.STANDALONE_HOSTNAME}')
 
 PRIVATE_KEY = utils.load_private_key('kp-main')
 
@@ -26,7 +23,8 @@ def cluster_benchmark():
 
     """
 
-    return redirect(f'http://{consts.PUBLIC_MASTER_HOSTNAME}/benchmark', code=302)
+    resp = requests.get(f'http://{consts.MASTER_HOSTNAME}/benchmark', timeout=370)
+    return resp.content, resp.status_code
 
 
 @proxy_bp.route("/benchmark/standalone", methods=["GET"])
@@ -37,7 +35,19 @@ def standalone_benchmark():
 
     """
 
-    return redirect(f'http://{consts.PUBLIC_STANDALONE_HOSTNAME}/benchmark', code=302)
+    resp = requests.get(f'http://{consts.STANDALONE_HOSTNAME}/benchmark', timeout=370)
+    return resp.content, resp.status_code
+
+@proxy_bp.route("/start", methods=["GET"])
+def start():
+    """
+
+    Redirects start requests to the master instance.
+
+    """
+
+    resp = requests.get(f'http://{consts.MASTER_HOSTNAME}/start', timeout=370)
+    return resp.content, resp.status_code
 
 
 @proxy_bp.route("/direct", methods=["POST"])
@@ -50,9 +60,8 @@ def direct_proxy():
 
     data = request.get_json()
     query: str = data['query']
-    args: List[str] = data.get('args', [])
     try:
-        output, dbname = make_query(query, args, 'direct')
+        output, dbname = make_query(query, 'direct')
     except Exception as e:
         return str(e), 500
     return {
@@ -71,9 +80,8 @@ def random_proxy():
 
     data = request.get_json()
     query: str = data['query']
-    args: List[str] = data.get('args', [])
     try:
-        output, dbname = make_query(query, args, 'random')
+        output, dbname = make_query(query, 'random')
     except Exception as e:
         return str(e), 500
     return {
@@ -93,9 +101,8 @@ def custom_proxy():
 
     data = request.get_json()
     query: str = data['query']
-    args: List[str] = data.get('args', [])
     try:
-        output, dbname = make_query(query, args, 'custom')
+        output, dbname = make_query(query, 'custom')
     except Exception as e:
         return str(e), 500
     return {
@@ -128,7 +135,7 @@ def get_bd(mode: str) -> str:
     else:
         return None
 
-def make_query(query:str, args: List, mode: str) -> str:
+def make_query(query:str, mode: str) -> str:
     try:
         db, name = get_bd(mode)
         if db is None:
@@ -149,11 +156,12 @@ def make_query(query:str, args: List, mode: str) -> str:
                 password='testpwd', 
                 port=3306,
                 charset='utf8mb4',
+                database='sakila',
                 cursorclass=pymysql.cursors.DictCursor) as conn:
                     try: 
                         with conn.cursor() as cursor:
-                            cursor.execute(query, args)
-                            return cursor.fetchone(), name
+                            cursor.execute(query)
+                            return cursor.fetchall(), name
                     except Exception as e:
                         raise Exception('An error occured while executing the query: ' + str(e))
             except Exception as e:
