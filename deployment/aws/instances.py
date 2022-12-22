@@ -1,4 +1,4 @@
-import os, logging, time
+import os, logging, time, json
 from typing import Dict, List
 import boto3
 from boto3_type_annotations.ec2 import ServiceResource, SecurityGroup, Instance, waiter, Client
@@ -32,7 +32,15 @@ def create_instances(ec2: ServiceResource, ec2_client: Client, instances_infos: 
     else:
         logging.info(f'Creating {n} instances of type "{type}" instance in zone "{zone}"...')
     
-    form_user_data_script = USER_DATA_SCRIPT.format(instance_setup_script=script, instance_setup_args=' '.join(setup_args))
+    # Generate a bash command to copy the keypair to the instance
+    raw_keypair = json.dumps(keypair).replace('"', '\\"')
+    keypair_cmd = f'echo "{raw_keypair}" > /keypairs/{keypair["KeyName"]}.json'
+
+    # Fill the user data script
+    form_user_data_script = USER_DATA_SCRIPT.format(
+        instance_setup_script=script, 
+        instance_setup_args=' '.join(setup_args), 
+        keypair_cmd=keypair_cmd)
     
     instances: Instance = ec2.create_instances(
         ImageId=image_id,

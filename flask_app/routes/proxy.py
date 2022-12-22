@@ -126,8 +126,7 @@ def make_query(query:str, args: List, mode: str) -> str:
     with open_tunnel(
       (db, 22),
       ssh_username='ubuntu',
-      ssh_pkey="/var/ssh/rsa_key",
-      ssh_private_key_password="secret",
+      ssh_pkey=PRIVATE_KEY,
       remote_bind_address=(consts.MASTER_HOSTNAME, 3306),
       local_bind_address=('0.0.0.0', 3306)) as tunnel:
         with pymysql.connect(

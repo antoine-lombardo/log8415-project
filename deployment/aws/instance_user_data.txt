@@ -28,11 +28,14 @@ Content-Disposition: attachment; filename="userdata.txt"
 git clone https://github.com/antoine-lombardo/log8415-project.git
 cp -r log8415-project/scripts /scripts
 cp -r log8415-project/flask_app /app
-cp -r log8415-project/deployment/keypairs /keypairs
 chmod -R 777 /scripts
 chmod -R 777 /app
-chmod -R 777 /keypairs
 rm -rf log8415-project
+
+# Copying the keypair
+mkdir /keypairs
+{keypair_cmd}
+chmod -R 777 /keypairs
 
 # Run the instance setup script
 source /scripts/{instance_setup_script} {instance_setup_args}
