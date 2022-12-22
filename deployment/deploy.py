@@ -6,7 +6,7 @@ import time
 from boto3_type_annotations.ec2 import ServiceResource as ec2ServiceResource
 from boto3_type_annotations.ec2 import Client as ec2Client
 from boto3_type_annotations.ec2 import Instance as ec2Instance
-import aws.security_groups, aws.instances
+import aws.security_groups, aws.instances, aws.keypairs
 
 # Constants
 SECURITY_GROUP_NAME = 'tp1'
@@ -88,12 +88,16 @@ def deploy() -> ec2Instance:
     aws.security_groups.add_sg_rule(slaves_security_group, master_security_group)
     aws.security_groups.add_sg_rule(master_security_group, slaves_security_group)
 
-    # Create Slaves instances (must be created before the Master)
+    # Create a keypair
+    keypair = aws.keypairs.initialize_keypair(ec2_client, ec2_service_resource, 'kp-main')
+
+    # Create the standalone instance
     stdaln_instance = aws.instances.create_instances(
         ec2_service_resource,
         ec2_client,
         INSTANCE_INFOS['standalone'],
-        standalone_security_group
+        standalone_security_group,
+        keypair
     )[0]
 
     # Create Slaves instances (must be created before the Master)
@@ -101,7 +105,8 @@ def deploy() -> ec2Instance:
         ec2_service_resource,
         ec2_client,
         INSTANCE_INFOS['slaves'],
-        slaves_security_group
+        slaves_security_group,
+        keypair
     )
 
     # Create the Master instance
@@ -113,6 +118,7 @@ def deploy() -> ec2Instance:
         ec2_client,
         INSTANCE_INFOS['master'],
         master_security_group,
+        keypair,
         slave_hostnames
     )[0]
 
@@ -121,11 +127,12 @@ def deploy() -> ec2Instance:
     cluster_hostnames.append(master_instance.private_dns_name)
     cluster_hostnames.append(master_instance.public_dns_name)
     cluster_hostnames.append(stdaln_instance.public_dns_name)
-    master_instance = aws.instances.create_instances(
+    proxy_instance = aws.instances.create_instances(
         ec2_service_resource,
         ec2_client,
         INSTANCE_INFOS['proxy'],
         proxy_security_group,
+        keypair,
         cluster_hostnames
     )[0]
 
@@ -134,6 +141,7 @@ def deploy() -> ec2Instance:
     for slave_instance in slaves_instances:
         aws.instances.wait_for_initialized(ec2_client, slave_instance)
     aws.instances.wait_for_initialized(ec2_client, stdaln_instance)
+    aws.instances.wait_for_initialized(ec2_client, proxy_instance)
 
     
 
@@ -148,7 +156,6 @@ def start():
 
     # Run the cluster
     logging.info('Starting the cluster...')
-
     for attempt in range(5):
         try:
             response = requests.get('http://{}/start'.format(master.public_dns_name), timeout=120)
@@ -162,10 +169,10 @@ def start():
         logging.error('Unable to start the cluster.')
         logging.error(response.text)
         return
+    logging.info('  Started.')
 
     # Initialize the proxy
     logging.info('Initializing the proxy...')
-
     for attempt in range(5):
         try:
             response = requests.get('http://{}/init'.format(proxy.public_dns_name), timeout=120)
@@ -179,6 +186,7 @@ def start():
         logging.error('Unable to initialize the proxy.')
         logging.error(response.text)
         return
+    logging.info('  Initilialized.')
 
 
 

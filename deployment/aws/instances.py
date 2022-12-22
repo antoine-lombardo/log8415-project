@@ -19,7 +19,7 @@ def delete_all_instances(ec2: ServiceResource):
             logging.info('  {}: Terminated.'.format(instance.id))
 
 
-def create_instances(ec2: ServiceResource, ec2_client: Client, instances_infos: Dict[str, str], security_group: SecurityGroup, setup_args: List[str] = []) -> List[Instance]:
+def create_instances(ec2: ServiceResource, ec2_client: Client, instances_infos: Dict[str, str], security_group: SecurityGroup, keypair: Dict, setup_args: List[str] = []) -> List[Instance]:
     type     = instances_infos['type']
     zone     = instances_infos['zone']
     image_id = instances_infos['image_id']
@@ -40,7 +40,7 @@ def create_instances(ec2: ServiceResource, ec2_client: Client, instances_infos: 
         MaxCount=n,
         InstanceType=type,
         UserData=form_user_data_script,
-        KeyName='vockey',
+        KeyName=keypair['KeyName'],
         Placement={
             'AvailabilityZone': zone,
         },
