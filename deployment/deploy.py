@@ -144,9 +144,7 @@ def start():
 
     # Retrieve the instances
     master = aws.instances.retrieve_instance(ec2_service_resource, INSTANCE_INFOS['master']['names'][0])
-    slaves = []
-    for slave_name in INSTANCE_INFOS['slaves']['names']:
-        slaves.append(aws.instances.retrieve_instance(ec2_service_resource, slave_name))
+    proxy  = aws.instances.retrieve_instance(ec2_service_resource, INSTANCE_INFOS['proxy']['names'][0])
 
     # Run the cluster
     logging.info('Starting the cluster...')
@@ -162,6 +160,23 @@ def start():
             time.sleep(5)
     if response.status_code != 200:
         logging.error('Unable to start the cluster.')
+        logging.error(response.text)
+        return
+
+    # Initialize the proxy
+    logging.info('Initializing the proxy...')
+
+    for attempt in range(5):
+        try:
+            response = requests.get('http://{}/init'.format(proxy.public_dns_name), timeout=120)
+        except:
+            attempt += 1
+            if attempt == 5:
+                logging.error('Proxy unreachable.')
+                return
+            time.sleep(5)
+    if response.status_code != 200:
+        logging.error('Unable to initialize the proxy.')
         logging.error(response.text)
         return
 

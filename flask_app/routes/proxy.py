@@ -55,13 +55,13 @@ def init():
 
     global MASTER_CONN, SLAVE1_CONN, SLAVE2_CONN, SLAVE3_CONN
     if MASTER_CONN is None:
-        MASTER_CONN = pymysql.connect(consts.MASTER_HOSTNAME, 'myapp', 'testpwd', 'sakila')
+        MASTER_CONN = pymysql.connect(host=consts.MASTER_HOSTNAME, user='myapp', password='testpwd', database='sakila')
     if SLAVE1_CONN is None:
-        SLAVE1_CONN = pymysql.connect(consts.SLAVES[0],       'myapp', 'testpwd', 'sakila')
+        SLAVE1_CONN = pymysql.connect(host=consts.SLAVES[0],       user='myapp', password='testpwd', database='sakila')
     if SLAVE2_CONN is None:
-        SLAVE2_CONN = pymysql.connect(consts.SLAVES[1],       'myapp', 'testpwd', 'sakila')
+        SLAVE2_CONN = pymysql.connect(host=consts.SLAVES[1],       user='myapp', password='testpwd', database='sakila')
     if SLAVE3_CONN is None:
-        SLAVE3_CONN = pymysql.connect(consts.SLAVES[2],       'myapp', 'testpwd', 'sakila')
+        SLAVE3_CONN = pymysql.connect(host=consts.SLAVES[2],       user='myapp', password='testpwd', database='sakila')
 
     return 'Connection initialized.', 200
 
