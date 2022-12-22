@@ -2,6 +2,7 @@
 import boto3
 import logging
 import requests
+import time
 from boto3_type_annotations.ec2 import ServiceResource as ec2ServiceResource
 from boto3_type_annotations.ec2 import Client as ec2Client
 from boto3_type_annotations.ec2 import Instance as ec2Instance
@@ -120,7 +121,16 @@ def start():
 
     # Run the cluster
     logging.info('Starting the cluster...')
-    response = requests.get('http://{}/start'.format(master.public_dns_name), timeout=120)
+
+    for attempt in range(5):
+        try:
+            response = requests.get('http://{}/start'.format(master.public_dns_name), timeout=120)
+        except:
+            attempt += 1
+            if attempt == 5:
+                logging.error('Master unreachable.')
+                return
+            time.sleep(5)
     if response.status_code != 200:
         logging.error('Unable to start the cluster.')
         logging.error(response.text)

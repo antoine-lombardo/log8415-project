@@ -35,7 +35,7 @@ expect eof
 ")
 echo "$SECURE_MYSQL"
 mysql -uroot -ptestpwd -e "DROP USER 'myapp'@'%';"
-mysql -uroot -ptestpwd -e "CREATE USER 'myapp'@'%' IDENTIFIED BY 'testpwd';"
+mysql -uroot -ptestpwd -e "CREATE USER 'myapp'@'%' IDENTIFIED WITH mysql_native_password BY 'testpwd';"
 mysql -uroot -ptestpwd -e "GRANT ALL PRIVILEGES ON *.* TO 'myapp'@'%';"
 
 source /scripts/common-setup-after.sh
