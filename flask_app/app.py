@@ -2,8 +2,6 @@ import os, logging, requests, utils, subprocess, time
 from flask import Flask, request
 
 
-
-
 logging.basicConfig(
     level=logging.INFO, 
     format='%(asctime)s - %(levelname)s - %(message)s', 
@@ -19,9 +17,9 @@ SLAVES = [
     os.environ.get('SLAVE2_HOSTNAME'),
     os.environ.get('SLAVE3_HOSTNAME'),
 ]
+MASTER_HOSTNAME = os.environ.get('MASTER_HOSTNAME')
 APP_MODE = os.environ.get('APP_MODE')
 HOSTNAME = subprocess.run(['hostname', '-f'], stdout=subprocess.PIPE).stdout.decode('utf-8')
-
 
 
 # --------------------------------------------------------------------------- #
@@ -39,10 +37,12 @@ logging.getLogger('waitress').setLevel(logging.INFO)
 # OUTPUT SESSION INFOS                                                        #
 # --------------------------------------------------------------------------- #
 app.logger.info(f'App started in mode: {APP_MODE}')
-if APP_MODE == 'MASTER':
+if APP_MODE == 'MASTER' or APP_MODE == 'PROXY':
     app.logger.info(f'Slave 1 hostname: {SLAVES[0]}')
     app.logger.info(f'Slave 2 hostname: {SLAVES[1]}')
     app.logger.info(f'Slave 3 hostname: {SLAVES[2]}')
+if APP_MODE == 'PROXY':
+    app.logger.info(f'Master  hostname: {MASTER_HOSTNAME}')
 
 
 # --------------------------------------------------------------------------- #
@@ -56,7 +56,21 @@ def log_the_request(response):
 
 
 # --------------------------------------------------------------------------- #
-# ROUTES                                                                      #
+# COMMON ROUTES                                                               #
+# --------------------------------------------------------------------------- #
+
+@app.route("/ping", methods=["GET"])
+def PING() -> tuple[str, int]:
+    """
+
+    Ping... Pong!
+
+    """
+    return 'pong!', 200
+
+
+# --------------------------------------------------------------------------- #
+# SPECIFIC ROUTES                                                             #
 # --------------------------------------------------------------------------- #
 
 if APP_MODE == 'MASTER':
@@ -68,8 +82,8 @@ elif APP_MODE == 'SLAVE':
 elif APP_MODE == 'STANDALONE':
     import routes.standalone
 
-
-
+elif APP_MODE == 'PROXY':
+    import routes.proxy
 
 
 # Start in production mode
