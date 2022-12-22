@@ -119,7 +119,7 @@ def master_start() -> tuple[str, int]:
 
 
 @app.route("/benchmark", methods=["GET"])
-def master_start() -> tuple[str, int]:
+def master_benchmark() -> tuple[str, int]:
     """
 
     Starts the Master node.
@@ -138,8 +138,10 @@ def master_start() -> tuple[str, int]:
        not all(status['slaves']):
         return 'Cluster is not ready to start a benchmark.', 500
 
+    app.logger.info('Preparing benchmark...')
     subprocess.run(['/scripts/cluster/benchmark/prepare_db.sh'], stdout=subprocess.PIPE, timeout=15)
     time.sleep(2)
+    app.logger.info('Running benchmark...')
     return subprocess.run(['/scripts/cluster/benchmark/run.sh'], stdout=subprocess.PIPE, timeout=60).stdout.decode('utf-8'), 200
 
 
