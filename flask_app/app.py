@@ -102,7 +102,7 @@ def slave_start(master_hostname: str) -> tuple[str, int]:
     if APP_MODE != 'SLAVE':
         return 'This request should be sent to a Slave node.', 404
 
-    output = subprocess.run(['./scripts/cluster/start/slave.sh', master_hostname], stdout=subprocess.PIPE).stdout.decode('utf-8')
+    output = subprocess.run(['/scripts/cluster/start/slave.sh', master_hostname], stdout=subprocess.PIPE).stdout.decode('utf-8')
     
     return output, 200
 

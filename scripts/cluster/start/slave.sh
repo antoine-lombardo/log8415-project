@@ -3,4 +3,4 @@
 master_hostname=$1
 
 cd /opt/mysqlcluster/home/mysqlc/bin
-ndbd -c $master_hostname:1186
+./ndbd -c $master_hostname:1186

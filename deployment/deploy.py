@@ -64,7 +64,8 @@ def deploy() -> ec2Instance:
     aws.security_groups.add_sg_rule(slaves_security_group, slaves_security_group)
     aws.security_groups.add_sg_rule(master_security_group, master_security_group)
 
-    # Allow packets from the master to slaves
+    # Allow packets from the master to slaves and from slaves to master
+    aws.security_groups.add_sg_rule(slaves_security_group, master_security_group)
     aws.security_groups.add_sg_rule(slaves_security_group, master_security_group)
 
 
