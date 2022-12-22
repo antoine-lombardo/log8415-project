@@ -61,11 +61,12 @@ def direct_proxy():
     data = request.get_json()
     query: str = data['query']
     try:
-        output, dbname = make_query(query, 'direct')
+        output, rowcount, dbname = make_query(query, 'direct')
     except Exception as e:
         return str(e), 500
     return {
         'output': output,
+        'rowcount': rowcount,
         'node': dbname
     }, 200
 
@@ -81,11 +82,12 @@ def random_proxy():
     data = request.get_json()
     query: str = data['query']
     try:
-        output, dbname = make_query(query, 'random')
+        output, rowcount, dbname = make_query(query, 'random')
     except Exception as e:
         return str(e), 500
     return {
         'output': output,
+        'rowcount': rowcount,
         'node': dbname
     }, 200
     
@@ -102,11 +104,12 @@ def custom_proxy():
     data = request.get_json()
     query: str = data['query']
     try:
-        output, dbname = make_query(query, 'custom')
+        output, rowcount, dbname = make_query(query, 'custom')
     except Exception as e:
         return str(e), 500
     return {
         'output': output,
+        'rowcount': rowcount,
         'node': dbname
     }, 200
 
@@ -161,7 +164,8 @@ def make_query(query:str, mode: str) -> str:
                     try: 
                         with conn.cursor() as cursor:
                             cursor.execute(query)
-                            return cursor.fetchall(), name
+                            conn.commit()
+                            return cursor.fetchall(), cursor.rowcount, name
                     except Exception as e:
                         raise Exception('An error occured while executing the query: ' + str(e))
             except Exception as e:

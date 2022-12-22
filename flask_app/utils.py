@@ -217,8 +217,13 @@ def load_private_key(name: str) -> str:
 
 def is_valid_query(query: str) -> bool:
     try:
-        sqlparse.parse(query)
-        return True
+        parsed_queries = sqlparse.parse(query)
+        if len(parsed_queries) > 0:
+            for parsed_querie in parsed_queries:
+                if parsed_querie.get_type() == 'UNKNOWN':
+                    return False
+            return True
+        return False
     except:
         return False
 

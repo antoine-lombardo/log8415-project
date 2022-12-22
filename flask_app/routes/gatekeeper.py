@@ -34,7 +34,7 @@ def start():
 
 
 @gtkpr_bp.route("/direct", methods=["POST"])
-def direct_gatekeeper():
+def direct_proxy():
     """
 
     Validate then redirect queries to the proxy.
@@ -52,7 +52,7 @@ def direct_gatekeeper():
         return 'Invalid query.', 400
     
     # Redirect the request to the proxy
-    resp = requests.get(f'http://{consts.PROXY_HOSTNAME}/direct', json={'query': query}, timeout=120)
+    resp = requests.post(f'http://{consts.PROXY_HOSTNAME}/direct', json={'query': query}, timeout=120)
     return resp.content, resp.status_code
 
 
@@ -79,7 +79,7 @@ def random_proxy():
         return 'This query perform write operations, it cannot be served by a slave node.', 400
     
     # Redirect the request to the proxy
-    resp = requests.get(f'http://{consts.PROXY_HOSTNAME}/random', json={'query': query}, timeout=120)
+    resp = requests.post(f'http://{consts.PROXY_HOSTNAME}/random', json={'query': query}, timeout=120)
     return resp.content, resp.status_code
     
 
@@ -104,10 +104,10 @@ def custom_proxy():
 
     # Write queries will be redirected to the /direct path of the proxy
     elif utils.is_write_query(query):
-        resp = requests.get(f'http://{consts.PROXY_HOSTNAME}/direct', json={'query': query}, timeout=120)
+        resp = requests.post(f'http://{consts.PROXY_HOSTNAME}/direct', json={'query': query}, timeout=120)
     
     # Read queries will be redirected to the /custom path of the proxy
     else:
-        resp = requests.get(f'http://{consts.PROXY_HOSTNAME}/custom', json={'query': query}, timeout=120)
+        resp = requests.post(f'http://{consts.PROXY_HOSTNAME}/custom', json={'query': query}, timeout=120)
 
     return resp.content, resp.status_code
