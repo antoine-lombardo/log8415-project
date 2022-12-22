@@ -171,23 +171,6 @@ def start():
         return
     logging.info('  Started.')
 
-    # Initialize the proxy
-    logging.info('Initializing the proxy...')
-    for attempt in range(5):
-        try:
-            response = requests.get('http://{}/init'.format(proxy.public_dns_name), timeout=120)
-        except:
-            attempt += 1
-            if attempt == 5:
-                logging.error('Proxy unreachable.')
-                return
-            time.sleep(5)
-    if response.status_code != 200:
-        logging.error('Unable to initialize the proxy.')
-        logging.error(response.text)
-        return
-    logging.info('  Initilialized.')
-
 
 
     

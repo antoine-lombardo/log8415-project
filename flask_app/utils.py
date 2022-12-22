@@ -1,6 +1,6 @@
 from typing import Dict, List
 from flask import request
-import subprocess, requests, time, logging, pythonping
+import subprocess, requests, time, logging, os, json, paramiko, io
 
 
 def base_url() -> str:
@@ -206,7 +206,11 @@ def parse_benchmark(lines: List[str]) -> Dict:
     return output
 
 
+def load_private_key(name: str) -> str:
+    if not os.path.isfile(f'/keypairs/{name}.json'):
+        return None
+    keypair = None
+    with open(f'/keypairs/{name}.json', 'r') as file:
+        keypair = json.load(file)
+    return paramiko.RSAKey.from_private_key(io.StringIO(keypair['KeyMaterial']))
 
-def ping(hostname: str):
-    result = pythonping.ping(target=hostname, count=1, timeout=10)
-    return result.rtt_avg

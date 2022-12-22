@@ -1,6 +1,7 @@
+from typing import List
 from flask import redirect, Blueprint, request
-import logging, consts, pymysql, random, utils
-from pymysql import Connection
+import logging, consts, pymysql, random, utils, pythonping, pymysql.cursors
+from sshtunnel import open_tunnel
 
 logging.info( '------------ Private hostnames ------------')
 logging.info(f'Master hostname:  {consts.MASTER_HOSTNAME}')
@@ -12,13 +13,7 @@ logging.info( '------------ Public hostnames ------------')
 logging.info(f'Stdaln hostname: {consts.PUBLIC_STANDALONE_HOSTNAME}')
 logging.info(f'Master hostname: {consts.PUBLIC_MASTER_HOSTNAME}')
 
-MASTER_CONN: Connection = None
-SLAVE1_CONN: Connection = None
-SLAVE2_CONN: Connection = None
-SLAVE3_CONN: Connection = None
-
-logging.info( '------------ MySQL Connections ------------')
-
+PRIVATE_KEY = utils.load_private_key('kp-main')
 
 proxy_bp = Blueprint('proxy', __name__)
 
@@ -45,27 +40,6 @@ def standalone_benchmark():
     return redirect(f'http://{consts.PUBLIC_STANDALONE_HOSTNAME}/benchmark', code=302)
 
 
-@proxy_bp.route("/init", methods=["GET"])
-def init():
-    """
-
-    Initializes connections.
-
-    """
-
-    global MASTER_CONN, SLAVE1_CONN, SLAVE2_CONN, SLAVE3_CONN
-    if MASTER_CONN is None:
-        MASTER_CONN = pymysql.connect(host=consts.MASTER_HOSTNAME, user='myapp', password='testpwd', database='sakila')
-    if SLAVE1_CONN is None:
-        SLAVE1_CONN = pymysql.connect(host=consts.SLAVES[0],       user='myapp', password='testpwd', database='sakila')
-    if SLAVE2_CONN is None:
-        SLAVE2_CONN = pymysql.connect(host=consts.SLAVES[1],       user='myapp', password='testpwd', database='sakila')
-    if SLAVE3_CONN is None:
-        SLAVE3_CONN = pymysql.connect(host=consts.SLAVES[2],       user='myapp', password='testpwd', database='sakila')
-
-    return 'Connection initialized.', 200
-
-
 @proxy_bp.route("/direct", methods=["POST"])
 def direct_proxy():
     """
@@ -74,13 +48,10 @@ def direct_proxy():
 
     """
 
-    with MASTER_CONN.cursor() as cursor:
-        query: str = request.json()['query']
-        cursor.execute(query)
-        return {
-            'node': 'master',
-            'output': cursor.fetchone()
-        }, 200
+    data = request.json()
+    query: str = request.json()['query']
+    args: List[str] = data.get('args', [])
+    return make_query(query, args, 'direct'), 200
 
 
 @proxy_bp.route("/random", methods=["POST"])
@@ -91,22 +62,10 @@ def random_proxy():
 
     """
 
-    i = random.randint(1, 3)
-    conn = None
-    if i == 1:
-        conn = SLAVE1_CONN
-    elif i == 2:
-        conn = SLAVE2_CONN
-    else:
-        conn = SLAVE3_CONN
-
-    with conn.cursor() as cursor:
-        query: str = request.json()['query']
-        cursor.execute(query)
-        return {
-            'node': 'slave' + str(i),
-            'output': cursor.fetchone()
-        }, 200
+    data = request.json()
+    query: str = request.json()['query']
+    args: List[str] = data.get('args', [])
+    return make_query(query, args, 'random'), 200
 
 
 @proxy_bp.route("/custom", methods=["POST"])
@@ -117,22 +76,52 @@ def custom_proxy():
 
     """
 
-    conns = []
-    conns.append({'conn': MASTER_CONN, 'hostname': consts.MASTER_HOSTNAME, 'name': 'master'})
-    conns.append({'conn': SLAVE1_CONN, 'hostname': consts.SLAVES[0], 'name': 'slave1'})
-    conns.append({'conn': SLAVE2_CONN, 'hostname': consts.SLAVES[1], 'name': 'slave2'})
-    conns.append({'conn': SLAVE3_CONN, 'hostname': consts.SLAVES[2], 'name': 'slave3'})
+    data = request.json()
+    query: str = request.json()['query']
+    args: List[str] = data.get('args', [])
+    return make_query(query, args, 'custom'), 200
 
-    fastest_conn = None
-    for conn in conns:
-        conn['ping'] = utils.ping(conn['hostname'])
-        if fastest_conn is None or fastest_conn['ping'] > conn['ping']:
-            fastest_conn = conn
 
-    with fastest_conn['conn'].cursor() as cursor:
-        query: str = request.json()['query']
-        cursor.execute(query)
-        return {
-            'node': fastest_conn['name'],
-            'output': cursor.fetchone()
-        }, 200
+def get_bd(mode: str) -> str:
+    if mode == 'direct':
+        return consts.MASTER_HOSTNAME
+    elif mode == 'random':
+        return consts.SLAVES[random.randint(0, 2)]
+    elif mode == 'custom':
+        db = {
+            'hostname': consts.MASTER_HOSTNAME,
+            'latency': pythonping.ping(target=consts.MASTER_HOSTNAME, count=1, timeout=10).rtt_avg
+        }
+        for slave in consts.SLAVE:
+            latency = pythonping.ping(target=slave, count=1, timeout=10).rtt_avg
+            if latency < db['latency']:
+                db = {
+                    'hostname': slave,
+                    'latency': latency
+                }
+        return db['hostname']
+    else:
+        return None
+
+def make_query(query:str, args: List, mode: str) -> str:
+    db = get_bd(mode)
+    if db is None:
+        return None
+    with open_tunnel(
+      (db, 22),
+      ssh_username='ubuntu',
+      ssh_pkey="/var/ssh/rsa_key",
+      ssh_private_key_password="secret",
+      remote_bind_address=(consts.MASTER_HOSTNAME, 3306),
+      local_bind_address=('0.0.0.0', 3306)) as tunnel:
+        with pymysql.connect(
+          host='localhost', 
+          user='myapp', 
+          password='testpwd', 
+          port=330,
+          charset='utf8mb4',
+          cursorclass=pymysql.cursors.DictCursor) as conn:
+            with conn.cursor() as cursor:
+                cursor.execute(query, args)
+                return cursor.fetchone()
+    
