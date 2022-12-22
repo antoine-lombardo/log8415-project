@@ -122,7 +122,7 @@ def master_start() -> tuple[str, int]:
 def master_benchmark() -> tuple[str, int]:
     """
 
-    Starts the Master node.
+    Basic benchmark on the cluster using sysbench
 
     """
 
@@ -131,18 +131,33 @@ def master_benchmark() -> tuple[str, int]:
 
     # Check the current status
     status = utils.get_cluster_status()
-
     if not status['manager'] or \
        not status['mysqld'] or \
        len(status['slaves']) < len(SLAVES) or \
        not all(status['slaves']):
         return 'Cluster is not ready to start a benchmark.', 500
 
-    app.logger.info('Preparing benchmark...')
-    subprocess.run(['/scripts/cluster/benchmark/prepare_db.sh'], stdout=subprocess.PIPE, timeout=15)
+    # Clean the database
+    app.logger.info('Cleaning the database...')
+    subprocess.run(['/scripts/cluster/benchmark/clean_db.sh'], stdout=subprocess.PIPE, timeout=15)
     time.sleep(2)
+
+    # Run the benchmark
     app.logger.info('Running benchmark...')
-    return subprocess.run(['/scripts/cluster/benchmark/run.sh'], stdout=subprocess.PIPE, timeout=60).stdout.decode('utf-8'), 200
+    output = subprocess.run(['/scripts/cluster/benchmark/run.sh'], stdout=subprocess.PIPE, timeout=60).stdout.decode('utf-8')
+    
+    # Only keep the results section
+    lines = output.split('\n')
+    start, end = None
+    for i in range(len(lines)):
+        if 'SQL statistics:' in lines[i]:
+            start = i
+        elif start is not None and 'sysbench' in lines[i]:
+            end = i
+            break
+    if start is None or end is None:
+        return 'Cannot parse the output of the benchmark.', 500
+    return '\n'.join(lines[start:end]), 200
 
 
 

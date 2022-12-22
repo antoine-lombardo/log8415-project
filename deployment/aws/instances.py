@@ -15,7 +15,7 @@ def delete_all_instances(ec2: ServiceResource):
             instance.terminate()
     for instance in ec2.instances.all():
         if instance.state['Name'] != 'terminated':
-            instance.wait_until_terminated()
+            #instance.wait_until_terminated()
             logging.info('  {}: Terminated.'.format(instance.id))
 
 

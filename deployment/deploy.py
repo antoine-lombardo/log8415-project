@@ -107,18 +107,13 @@ def start():
     for slave_name in INSTANCE_INFOS['slaves']['names']:
         slaves.append(aws.instances.retrieve_instance(ec2_service_resource, slave_name))
 
-    # Start the Slaves
-    for i in range(len(INSTANCE_INFOS['slaves']['names'])):
-        logging.info(f'Starting Data Node on "{INSTANCE_INFOS["slaves"]["names"][i]}"')
-        response = requests.get('http://{}/slaves/{}/start'.format(master.public_dns_name, i), timeout=60)
-        data = response.json()
-        if response.status_code != 200 or not data['connected']:
-            logging.error('Unable to start Data Node.')
-            logging.error(f'Response from Master: {response.text}')
-        logging.info(f'  Started as Node ID {data["node_id"]}')
-
-    # Check the cluster status
-    response = requests.get('http://{}/status'.format(master.public_dns_name), timeout=60)
+    # Run the cluster
+    logging.info('Starting the cluster...')
+    response = requests.get('http://{}/start'.format(master.public_dns_name), timeout=120)
+    if response.status_code != 200:
+        logging.error('Unable to start the cluster.')
+        logging.error(response.text)
+        return
 
 
 
@@ -130,4 +125,4 @@ def start():
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO, format='%(levelname)s - %(message)s')
     deploy()
-    #start()
+    start()
