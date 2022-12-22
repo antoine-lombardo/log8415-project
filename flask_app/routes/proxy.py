@@ -49,9 +49,13 @@ def direct_proxy():
     """
 
     data = request.get_json()
-    query: str = request.json()['query']
+    query: str = data['query']
     args: List[str] = data.get('args', [])
-    return make_query(query, args, 'direct'), 200
+    output, dbname = make_query(query, args, 'direct')
+    return {
+        'output': output,
+        'node': dbname
+    }, 200
 
 
 @proxy_bp.route("/random", methods=["POST"])
@@ -63,9 +67,14 @@ def random_proxy():
     """
 
     data = request.get_json()
-    query: str = request.json()['query']
+    query: str = data['query']
     args: List[str] = data.get('args', [])
-    return make_query(query, args, 'random'), 200
+    output, dbname = make_query(query, args, 'random')
+    return {
+        'output': output,
+        'node': dbname
+    }, 200
+    
 
 
 @proxy_bp.route("/custom", methods=["POST"])
@@ -77,34 +86,41 @@ def custom_proxy():
     """
 
     data = request.get_json()
-    query: str = request.json()['query']
+    query: str = data['query']
     args: List[str] = data.get('args', [])
-    return make_query(query, args, 'custom'), 200
+    output, dbname = make_query(query, args, 'custom')
+    return {
+        'output': output,
+        'node': dbname
+    }, 200
 
 
 def get_bd(mode: str) -> str:
     if mode == 'direct':
-        return consts.MASTER_HOSTNAME
+        return consts.MASTER_HOSTNAME, 'master'
     elif mode == 'random':
-        return consts.SLAVES[random.randint(0, 2)]
+        i = random.randint(0, 2)
+        return consts.SLAVES[i], 'slave' + str(i+1)
     elif mode == 'custom':
         db = {
             'hostname': consts.MASTER_HOSTNAME,
+            'name': 'master',
             'latency': pythonping.ping(target=consts.MASTER_HOSTNAME, count=1, timeout=10).rtt_avg
         }
-        for slave in consts.SLAVES:
-            latency = pythonping.ping(target=slave, count=1, timeout=10).rtt_avg
+        for i in range(len(consts.SLAVES)):
+            latency = pythonping.ping(target=consts.SLAVES[i], count=1, timeout=10).rtt_avg
             if latency < db['latency']:
                 db = {
-                    'hostname': slave,
+                    'hostname': consts.SLAVES[i],
+                    'name': 'slave' + str(i+1),
                     'latency': latency
                 }
-        return db['hostname']
+        return db['hostname'], db['name']
     else:
         return None
 
 def make_query(query:str, args: List, mode: str) -> str:
-    db = get_bd(mode)
+    db, name = get_bd(mode)
     if db is None:
         return None
     with open_tunnel(
@@ -123,5 +139,5 @@ def make_query(query:str, args: List, mode: str) -> str:
           cursorclass=pymysql.cursors.DictCursor) as conn:
             with conn.cursor() as cursor:
                 cursor.execute(query, args)
-                return cursor.fetchone()
+                return cursor.fetchone(), name
     
