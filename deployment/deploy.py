@@ -56,7 +56,7 @@ INSTANCE_INFOS = {
 
 def deploy() -> ec2Instance:
     '''
-    Fully deploy a ec2 instance with all scripts installed.
+    Deploy the whole EC2 environment.
     '''
 
     ec2_service_resource: ec2ServiceResource = boto3.resource('ec2')
@@ -150,7 +150,7 @@ def deploy() -> ec2Instance:
     )[0]
 
     # Create the Gatekeeper instance
-    proxy_instance = aws.instances.create_instances(
+    gatekeeper_instance = aws.instances.create_instances(
         ec2_service_resource,
         ec2_client,
         INSTANCE_INFOS['gatekeeper'],
@@ -165,42 +165,29 @@ def deploy() -> ec2Instance:
         aws.instances.wait_for_initialized(ec2_client, slave_instance)
     aws.instances.wait_for_initialized(ec2_client, stdaln_instance)
     aws.instances.wait_for_initialized(ec2_client, proxy_instance)
+    aws.instances.wait_for_initialized(ec2_client, gatekeeper_instance)
 
-    
-
-
-def start():
-    ec2_service_resource: ec2ServiceResource = boto3.resource('ec2')
-    ec2_client: ec2Client = boto3.client('ec2')
-
-    # Retrieve the instances
-    gatekeeper = aws.instances.retrieve_instance(ec2_service_resource, INSTANCE_INFOS['gatekeeper']['names'][0])
-
-    # Run the cluster
-    logging.info('Starting the cluster...')
-    for attempt in range(5):
-        try:
-            response = requests.get('http://{}/start'.format(gatekeeper.public_dns_name), timeout=120)
-        except:
-            attempt += 1
-            if attempt == 5:
-                logging.error('Gatekeeper unreachable.')
-                return
-            time.sleep(5)
-    if response.status_code != 200:
-        logging.error('Unable to start the cluster.')
-        logging.error(response.text)
-        return
-    logging.info('  Started.')
-
+    # Print termination infos
+    logging.info('Deployment is done! Postman is the recommended tool to interact with the system.')
+    logging.info('')
+    logging.info('API usage:')
+    logging.info('+ Start the cluster [GET]')
+    logging.info(f'  http://{gatekeeper_instance.public_dns_name}/start')
+    logging.info('+ Run benchmark on the cluster [GET]')
+    logging.info(f'  http://{gatekeeper_instance.public_dns_name}/benchmark/cluster')
+    logging.info('+ Run benchmark on the standalone [GET]')
+    logging.info(f'  http://{gatekeeper_instance.public_dns_name}/benchmark/standalone')
+    logging.info('+ Make a query using the "Direct" mode [POST]')
+    logging.info(f'  http://{gatekeeper_instance.public_dns_name}/direct')
+    logging.info('+ Make a query using the "Random" mode [POST]')
+    logging.info(f'  http://{gatekeeper_instance.public_dns_name}/random')
+    logging.info('+ Make a query using the "Custom" mode [POST]')
+    logging.info(f'  http://{gatekeeper_instance.public_dns_name}/custom')
 
 
     
-
-
 
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO, format='%(levelname)s - %(message)s')
     deploy()
-    start()
