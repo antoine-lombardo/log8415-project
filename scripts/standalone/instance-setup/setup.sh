@@ -1,5 +1,7 @@
 #!/bin/bash
 
+source /scripts/common-setup-before.sh
+
 export APP_MODE=STANDALONE
 
 apt-get update
@@ -9,3 +11,5 @@ curl https://downloads.mysql.com/docs/sakila-db.tar.gz --output /shared/sakila-d
 tar -xf /shared/sakila-db.tar.gz -C /shared
 rm /shared/sakila-db.tar.gz
 chmod -R 777 /shared
+
+source /scripts/common-setup-after.sh

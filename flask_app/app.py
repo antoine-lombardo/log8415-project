@@ -139,12 +139,12 @@ def master_benchmark() -> tuple[str, int]:
 
     # Clean the database
     app.logger.info('Cleaning the database...')
-    subprocess.run(['/scripts/cluster/benchmark/clean_db.sh'], stdout=subprocess.PIPE, timeout=15)
+    subprocess.run(['/scripts/cluster/benchmark/clean_db.sh'], stdout=subprocess.PIPE, timeout=30)
     time.sleep(2)
 
     # Run the benchmark
     app.logger.info('Running benchmark...')
-    output = subprocess.run(['/scripts/cluster/benchmark/run.sh'], stdout=subprocess.PIPE, timeout=60).stdout.decode('utf-8')
+    output = subprocess.run(['/scripts/cluster/benchmark/run.sh'], stdout=subprocess.PIPE, timeout=360).stdout.decode('utf-8')
     
     # Only keep the results section
     lines = output.split('\n')
