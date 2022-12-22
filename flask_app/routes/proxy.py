@@ -1,17 +1,21 @@
-from app import app, SLAVES, PUBLIC_MASTER_HOSTNAME, PUBLIC_STANDALONE_HOSTNAME, MASTER_HOSTNAME
-from flask import redirect
+from flask import redirect, Blueprint
+import logging, consts
 
-app.logger.info( '------------ Private hostnames ------------')
-app.logger.info(f'Master hostname:  {MASTER_HOSTNAME}')
-app.logger.info(f'Slave 1 hostname: {SLAVES[0]}')
-app.logger.info(f'Slave 2 hostname: {SLAVES[1]}')
-app.logger.info(f'Slave 3 hostname: {SLAVES[2]}')
+logging.info( '------------ Private hostnames ------------')
+logging.info(f'Master hostname:  {consts.MASTER_HOSTNAME}')
+logging.info(f'Slave 1 hostname: {consts.SLAVES[0]}')
+logging.info(f'Slave 2 hostname: {consts.SLAVES[1]}')
+logging.info(f'Slave 3 hostname: {consts.SLAVES[2]}')
 
-app.logger.info( '------------ Public hostnames ------------')
-app.logger.info(f'Stdaln hostname: {PUBLIC_STANDALONE_HOSTNAME}')
-app.logger.info(f'Master hostname: {PUBLIC_MASTER_HOSTNAME}')
+logging.info( '------------ Public hostnames ------------')
+logging.info(f'Stdaln hostname: {consts.PUBLIC_STANDALONE_HOSTNAME}')
+logging.info(f'Master hostname: {consts.PUBLIC_MASTER_HOSTNAME}')
 
-@app.route("/benchmark/cluster", methods=["GET"])
+
+proxy_bp = Blueprint('proxy', __name__)
+
+
+@proxy_bp.route("/benchmark/cluster", methods=["GET"])
 def cluster_benchmark():
     """
 
@@ -19,10 +23,10 @@ def cluster_benchmark():
 
     """
 
-    return redirect(f'http://{PUBLIC_MASTER_HOSTNAME}/benchmark', code=302)
+    return redirect(f'http://{consts.PUBLIC_MASTER_HOSTNAME}/benchmark', code=302)
 
 
-@app.route("/benchmark/standalone", methods=["GET"])
+@proxy_bp.route("/benchmark/standalone", methods=["GET"])
 def standalone_benchmark():
     """
 
@@ -30,4 +34,4 @@ def standalone_benchmark():
 
     """
 
-    return redirect(f'http://{PUBLIC_STANDALONE_HOSTNAME}/benchmark', code=302)
+    return redirect(f'http://{consts.PUBLIC_STANDALONE_HOSTNAME}/benchmark', code=302)

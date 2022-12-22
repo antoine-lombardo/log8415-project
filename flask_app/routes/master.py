@@ -1,14 +1,15 @@
-from app import app, SLAVES, HOSTNAME
-import utils, subprocess, time
+from flask import Blueprint
+import utils, subprocess, time, consts, logging
 
 
-app.logger.info( '------------ Private hostnames ------------')
-app.logger.info(f'Slave 1 hostname: {SLAVES[0]}')
-app.logger.info(f'Slave 2 hostname: {SLAVES[1]}')
-app.logger.info(f'Slave 3 hostname: {SLAVES[2]}')
+logging.info( '------------ Private hostnames ------------')
+logging.info(f'Slave 1 hostname: {consts.SLAVES[0]}')
+logging.info(f'Slave 2 hostname: {consts.SLAVES[1]}')
+logging.info(f'Slave 3 hostname: {consts.SLAVES[2]}')
 
 
-@app.route("/start", methods=["GET"])
+master_bp = Blueprint('master', __name__)
+@master_bp.route('/start', methods=["GET"])
 def start() -> tuple[str, int]:
     """
 
@@ -24,12 +25,12 @@ def start() -> tuple[str, int]:
         return 'mgmd is not running.', 500
 
     # Ensure slaves are running
-    err = utils.ensure_slaves_are_up(SLAVES, HOSTNAME)
+    err = utils.ensure_slaves_are_up(consts.SLAVES, consts.HOSTNAME)
     if err:
         return err, 500
     
     # Ensure mysqld is running
-    err = utils.ensure_mysqld_is_up(app)
+    err = utils.ensure_mysqld_is_up()
     if err:
         return err, 500
     
@@ -38,24 +39,24 @@ def start() -> tuple[str, int]:
 
 
 
-@app.route("/benchmark", methods=["GET"])
+@master_bp.route('/benchmark', methods=["GET"])
 def benchmark() -> tuple[str, int]:
 
     # Check the current status
     status = utils.get_cluster_status()
     if not status['manager'] or \
        not status['mysqld'] or \
-       len(status['slaves']) < len(SLAVES) or \
+       len(status['slaves']) < len(consts.SLAVES) or \
        not all(status['slaves']):
         return 'Cluster is not ready to start a benchmark.', 500
 
     # Clean the database
-    app.logger.info('Cleaning the database...')
+    logging.info('Cleaning the database...')
     subprocess.run(['/scripts/cluster/benchmark/clean_db.sh'], stdout=subprocess.PIPE, timeout=30)
     time.sleep(2)
 
     # Run the benchmark
-    app.logger.info('Running benchmark...')
+    logging.info('Running benchmark...')
     output = subprocess.run(['/scripts/cluster/benchmark/run.sh'], stdout=subprocess.PIPE, timeout=360).stdout.decode('utf-8')
     
     # Only keep the results section

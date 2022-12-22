@@ -1,4 +1,4 @@
-import os, logging, requests, utils, subprocess, time
+import logging, utils, consts
 from flask import Flask, request
 
 
@@ -6,23 +6,6 @@ logging.basicConfig(
     level=logging.INFO, 
     format='%(asctime)s - %(levelname)s - %(message)s', 
     datefmt='%Y-%m-%d %H:%M:%S')
-
-
-# --------------------------------------------------------------------------- #
-# GLOBALS                                                                     #
-# --------------------------------------------------------------------------- #
-
-SLAVES = [
-    os.environ.get('SLAVE1_HOSTNAME'),
-    os.environ.get('SLAVE2_HOSTNAME'),
-    os.environ.get('SLAVE3_HOSTNAME'),
-]
-MASTER_HOSTNAME = os.environ.get('MASTER_HOSTNAME')
-PUBLIC_MASTER_HOSTNAME     = os.environ.get('PUBLIC_MASTER_HOSTNAME')
-PUBLIC_STANDALONE_HOSTNAME = os.environ.get('PUBLIC_STANDALONE_HOSTNAME')
-
-APP_MODE = os.environ.get('APP_MODE')
-HOSTNAME = subprocess.run(['hostname', '-f'], stdout=subprocess.PIPE).stdout.decode('utf-8')
 
 
 # --------------------------------------------------------------------------- #
@@ -39,7 +22,7 @@ logging.getLogger('waitress').setLevel(logging.INFO)
 # --------------------------------------------------------------------------- #
 # OUTPUT SESSION INFOS                                                        #
 # --------------------------------------------------------------------------- #
-app.logger.info(f'App started in mode: {APP_MODE}')
+app.logger.info(f'App started in mode: {consts.APP_MODE}')
 
 
 # --------------------------------------------------------------------------- #
@@ -70,17 +53,21 @@ def PING() -> tuple[str, int]:
 # SPECIFIC ROUTES                                                             #
 # --------------------------------------------------------------------------- #
 
-if APP_MODE == 'MASTER':
-    import routes.master
+if consts.APP_MODE == 'MASTER':
+    from routes.master import master_bp
+    app.register_blueprint(master_bp)
 
-elif APP_MODE == 'SLAVE':
-    import routes.slave
+elif consts.APP_MODE == 'SLAVE':
+    from routes.slave import slave_bp
+    app.register_blueprint(slave_bp)
 
-elif APP_MODE == 'STANDALONE':
-    import routes.standalone
+elif consts.APP_MODE == 'STANDALONE':
+    from routes.standalone import standalone_bp
+    app.register_blueprint(standalone_bp)
 
-elif APP_MODE == 'PROXY':
-    import routes.proxy
+elif consts.APP_MODE == 'PROXY':
+    from routes.proxy import proxy_bp
+    app.register_blueprint(proxy_bp)
 
 
 # Start in production mode

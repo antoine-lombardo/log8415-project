@@ -1,6 +1,6 @@
 from typing import Dict, List
-from flask import request, Flask
-import subprocess, requests, time
+from flask import request
+import subprocess, requests, time, logging
 
 
 def base_url() -> str:
@@ -65,11 +65,11 @@ def ensure_slaves_are_up(slaves: List[str], hostname: str):
             return 'One or more slave is unable to connect to the master.'
     return None
 
-def ensure_mysqld_is_up(app: Flask):
+def ensure_mysqld_is_up():
     status = get_cluster_status()
     if not status['mysqld']:
         try:
-            app.logger.info('Starting mysqld...')
+            logging.info('Starting mysqld...')
             subprocess.run(['/scripts/cluster/setup/master/start_mysqld.sh'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=20)
         except:
             subprocess.run(['killall', 'mysqld'], stdout=subprocess.PIPE)
@@ -86,13 +86,13 @@ def ensure_mysqld_is_up(app: Flask):
         if not mysqld_started:
             return 'Failed to start mysqld.'
         try:
-            app.logger.info('Securing the mysql database...')
+            logging.info('Securing the mysql database...')
             subprocess.run(['/scripts/cluster/setup/master/secure_mysql.sh'], stdout=subprocess.PIPE, timeout=20)
         except:
             subprocess.run(['killall', 'mysqld'], stdout=subprocess.PIPE)
             return 'Failed to secure the mysql installation.'
         try:
-            app.logger.info('Adding the database user...')
+            logging.info('Adding the database user...')
             subprocess.run(['/scripts/cluster/setup/master/create_myapp_user.sh'], stdout=subprocess.PIPE, timeout=10)
         except:
             subprocess.run(['killall', 'mysqld'], stdout=subprocess.PIPE)

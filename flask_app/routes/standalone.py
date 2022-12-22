@@ -1,16 +1,20 @@
-from app import app, SLAVES
-import subprocess, time, utils
+from flask import Blueprint
+import subprocess, time, consts, logging
 
-@app.route("/benchmark", methods=["GET"])
+
+standalone_bp = Blueprint('standalone', __name__)
+
+
+@standalone_bp.route("/benchmark", methods=["GET"])
 def benchmark() -> tuple[str, int]:
 
     # Clean the database
-    app.logger.info('Cleaning the database...')
+    logging.info('Cleaning the database...')
     subprocess.run(['/scripts/standalone/benchmark/clean_db.sh'], stdout=subprocess.PIPE, timeout=30)
     time.sleep(2)
 
     # Run the benchmark
-    app.logger.info('Running benchmark...')
+    logging.info('Running benchmark...')
     output = subprocess.run(['/scripts/cluster/benchmark/run.sh'], stdout=subprocess.PIPE, timeout=360).stdout.decode('utf-8')
     
     # Only keep the results section
