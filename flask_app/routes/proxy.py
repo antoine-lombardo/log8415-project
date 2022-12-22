@@ -67,7 +67,7 @@ def init():
 
 
 @proxy_bp.route("/direct", methods=["POST"])
-def direct():
+def direct_proxy():
     """
 
     Send the query to the master node.
@@ -84,7 +84,7 @@ def direct():
 
 
 @proxy_bp.route("/random", methods=["POST"])
-def random():
+def random_proxy():
     """
 
     Send the query to a random node.
@@ -110,7 +110,7 @@ def random():
 
 
 @proxy_bp.route("/custom", methods=["POST"])
-def random():
+def custom_proxy():
     """
 
     Send the query to the node with the lowest latency.
