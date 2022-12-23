@@ -9,7 +9,7 @@ You need to have Python 3 and AWS CLI installed on your machine. Please refer to
 To run the main script, you first need to download the standalone script. This can be done using these commands on Ubuntu:
 
 ```bash
-wget .....
+wget https://github.com/antoine-lombardo/log8415-project/releases/download/v1/script.sh
 sudo chmod +x script.sh
 sudo ./script.sh
 ```
