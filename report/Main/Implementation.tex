@@ -1,0 +1,7 @@
+\pagebreak\section{How the implementation works} \label{T1}
+
+\paragraph{}The implementation is done in different sub-parts. First of all, the deployment script uses the boto3 Python library to interact with the AWS API in order to create the instances, the security groups and every other resource needed. It also automatically install all the requirements needed on each instance and add the security rules between the security groups. A bash script has been created for the user to interact more naturally with it in the form of an interactive prompt. The instructions on how to run it will be detailed in the next section.
+
+\paragraph{}Each instance runs a Flask app with the same core, but each instance loads different routes, based on the instructions given by the deployment script. Master and Standalone have routes for Benchmarking, which can be accessed through the Gatekeeper (see figure 5). The Master have a route to intialize the Cluster, the Slaves have a route to connect to the Master, the proxy have all these routes redirected to the correct instances and the SQl query requests and finally the Gatekeeper have the same routes as the proxy, but these routes does some verification/sanitizing before redirecting them to the Proxy.
+
+\paragraph{}Finally, multiple bash scripts have been implemented, which are used in the deployment or the instances and by the Flask app.

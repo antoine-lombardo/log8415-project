@@ -1,0 +1,10 @@
+\pagebreak\section{Implementation of The Proxy pattern} \label{T2}
+
+\paragraph{}For the proxy pattern, I have created a Flask app on which can be sent SQL queries inside of a POST HTTP request. I have created a route for every mode of operation (e.g. /direct, /random and /custom). Each SQL query is executed through a SSH tunnel to be able to execute it on the desired node. For the direct route, it simply run the SQL query on the Master node of the Cluster. For the random route, it randomly select a Slave node and runs the query through it. Finally, for the direct route, it pings all instances (including the Master one) and make the request through the instance that have the lowest latency. The proxy performs no verification on the request whatsoever, it only execute the query on the correct node.
+
+\paragraph{}Finally, I also used the proxy to redirect the benchmark request on the Master or the Standalone instance
+depending on the requested path. All instances run a Flask app with different routes to be able to perform task
+on them without have to rely on a SSH connection. Having the ability to run the benchmark using the REST
+API was not part of the project, but it made it a lot easier for retrieving the results of running them. Having
+these route means that no SSH connection need to be done on any instances, everything can be done using
+the REST API.

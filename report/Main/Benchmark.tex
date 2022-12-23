@@ -1,0 +1,35 @@
+\pagebreak
+\section{Benchmarking MySQL Standalone vs. MySQL Cluster} \label{T3}
+
+\paragraph{} Benchmarks have been done using the sysbench tool on both the Master instance and the Standalone instance. The parameter used to prepare the benchmarks is a table size of 1,000,000 entries and the parameters for the benchmarking process are 6 threads and an execution time of 60 seconds. For both Cluster and Standalone, benchmarks has been executed 5 times to ensure that results are coherent. At the end of the 5 benchmarks, a total of 2,387,392 operations have been executed on the Cluster and 1,282,689 on the Standalone. The composition of the benchmarks is as follow:
+
+\begin{figure}[htbp]
+  \centering
+  \begin{minipage}[b]{0.48\textwidth}
+    \includesvg[inkscapelatex=false, width = \textwidth]{Resources/composition_cluster.svg}
+    \caption{Benchmark Composition of the Cluster}
+  \end{minipage}
+  \hfill
+  \begin{minipage}[b]{0.48\textwidth}
+    \includesvg[inkscapelatex=false, width = \textwidth]{Resources/composition_standalone.svg}
+    \caption{Benchmark Composition of the Standalone}
+  \end{minipage}
+\end{figure}\\
+
+\paragraph{} We can see in the above figures that the benchmarks composition is pretty much the same on the Cluster and the Standalone, which means that a fair comparison can be done using the results. Also, we see that the benchmarks does mostly reads operations, which will have an impact on the results. In the following figure, the average throughput of the Cluster and the Standalone will be compared.\\
+
+\begin{figure}[htbp]
+  \centering
+  \includesvg[inkscapelatex=false, width = \textwidth]{Resources/throughput.svg}
+  \caption{Throughput comparison between the Cluster and the Standalone}
+\end{figure}\\
+
+\paragraph{}In the last figure, we can see that average throughput of the Cluster is about two times bigger than the Standalone. This can be explained by the fact that the benchmarks done make a majority of read operations, which is usually faster on a distributed database such as MySQL Cluster. Since the reads can be done on any Slave node, the read troughput can theoretically be 3 times bigger than a Standalone, but will always be lower than that because of the latency added by the processing on the Master node and the added network latency. In my case, the benchmarks did write and other types of operations, which explain why we don't get as much of a difference, however, the difference is still very noticeable. In the next figure, a comparison of the average latency will be presented.\\
+
+\begin{figure}[htbp]
+  \centering
+  \includesvg[inkscapelatex=false, width = \textwidth]{Resources/latencies.svg}
+  \caption{Latency comparison between the Cluster and the Standalone}
+\end{figure}\\
+
+\paragraph{}In the abode figure, we see that the average latency of the Cluster is about two times slower that the Standalone, which is normal because the average throughput and the average latency are directly connected. The maximum latency doesn't give much information, since it was sometime higher on the Cluster and sometimes higher on the Standalone, which is probably due to network latency. The minimum latency, however, has always been lower on the Cluster and shows that the minimum latency for a query can be obtained using a Cluster, which correlate with the above results.

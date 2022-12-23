@@ -1,0 +1,11 @@
+\section{Implementation of The Gatekeeper pattern} \label{T2}
+
+\paragraph{}For the Gatekeeper, I have also created a Flask app that verify and sanitizes the requests it receives before redirecting them to the proxy. For each SQL query request, it checks if a query has been provided, and returns an error if no query is found. After that, it checks if the query is valid thanks to the sqlparse Python library, and returns an error if it is not valid. For special modes (random and custom), some other checks are also done. For the random route, it checks the query perform write operation and returns an error in that case, because Slaves cannot performs write operations. For the custom mode, if a write operation is detected, it will redirect the request to the direct route of the proxy to prevent sending the request to a Slave node. Also, every request is sanitized before being redirected to the proxy, which means that any added arguments sent to the Gatekeeper will be wiped out preventing the end-user of trying to exploit some vulnerability of the proxy.
+
+\paragraph{}For the benchmark route, it simply sanitize it and redirect it to the Proxy, since no verification needs to be done at this point. The following figure show the complete architecture of the system, and the allowed requests between them.\\
+
+\begin{figure}[htbp]
+  \centering
+  \includesvg[inkscapelatex=false, width = 14cm]{Resources/architecture.svg}
+  \caption{Architecture of the system}
+\end{figure}\\
