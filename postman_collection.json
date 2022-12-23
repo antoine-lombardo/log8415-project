@@ -1,0 +1,174 @@
+{
+	"info": {
+		"_postman_id": "c98cd54d-5c44-4979-a500-b858c16dd13c",
+		"name": "LOG8415 - Personal Project",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "19471030"
+	},
+	"item": [
+		{
+			"name": "Start Cluster",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://{{gatekeeper_dns}}/start",
+					"protocol": "http",
+					"host": [
+						"{{gatekeeper_dns}}"
+					],
+					"path": [
+						"start"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Cluster Benchmark",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://{{gatekeeper_dns}}/benchmark/cluster",
+					"protocol": "http",
+					"host": [
+						"{{gatekeeper_dns}}"
+					],
+					"path": [
+						"benchmark",
+						"cluster"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Standalone Benchmark",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://{{gatekeeper_dns}}/benchmark/standalone",
+					"protocol": "http",
+					"host": [
+						"{{gatekeeper_dns}}"
+					],
+					"path": [
+						"benchmark",
+						"standalone"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Query SELECT",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"query\": \"SELECT * FROM rental WHERE rental_date >  DATE_SUB(NOW(), INTERVAL 24 HOUR);\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://{{gatekeeper_dns}}/random",
+					"protocol": "http",
+					"host": [
+						"{{gatekeeper_dns}}"
+					],
+					"path": [
+						"random"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Query INSERT",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"query\": \"INSERT INTO rental(rental_date, inventory_id, customer_id, staff_id) VALUES(NOW(), 10, 3, 1);\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://{{gatekeeper_dns}}/custom",
+					"protocol": "http",
+					"host": [
+						"{{gatekeeper_dns}}"
+					],
+					"path": [
+						"custom"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Query INVALID",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"query\": \"THIS IS AN INVALID QUERY;\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://{{gatekeeper_dns}}/direct",
+					"protocol": "http",
+					"host": [
+						"{{gatekeeper_dns}}"
+					],
+					"path": [
+						"direct"
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "gatekeeper_dns",
+			"value": "",
+			"type": "string"
+		}
+	]
+}
