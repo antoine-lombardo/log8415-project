@@ -2,6 +2,7 @@
 
 source /scripts/common-setup-before.sh
 
+# Environment variables specific to the proxy instance
 master_hostname=$(hostname -f)
 slave1_hostname=$1
 slave2_hostname=$2

@@ -1,5 +1,6 @@
 #!/bin/bash
 
+# Start/restart the mysqld service
 killall mysqld
 sleep 1
 cd /opt/mysqlcluster/home/mysqlc/bin

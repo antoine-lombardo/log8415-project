@@ -3,6 +3,7 @@
 source /scripts/common-setup-before.sh
 source /scripts/cluster/instance-setup/common.sh
 
+# Environment variables specific to the master instance
 master_hostname=$(hostname -f)
 slave1_hostname=$1
 slave2_hostname=$2
@@ -12,9 +13,7 @@ export SLAVE2_HOSTNAME=$slave2_hostname
 export SLAVE3_HOSTNAME=$slave3_hostname
 export APP_MODE=MASTER
 
-
-
-# Download the Sakila DB
+# Download Sakila
 mkdir /shared
 curl https://downloads.mysql.com/docs/sakila-db.tar.gz --output /shared/sakila-db.tar.gz
 tar -xf /shared/sakila-db.tar.gz -C /shared
@@ -30,7 +29,7 @@ mkdir /opt/mysqlcluster/deploy/conf
 mkdir /opt/mysqlcluster/deploy/mysqld_data
 mkdir /opt/mysqlcluster/deploy/ndb_data
 
-# Write the Cluster config file
+# Write the Cluster config file (my.cnf)
 cat > /opt/mysqlcluster/deploy/conf/my.cnf <<- EOF
 [mysqld]
 ndbcluster
@@ -39,7 +38,7 @@ basedir=/opt/mysqlcluster/home/mysqlc
 port=3306
 EOF
 
-# Write the Node Manager config file
+# Write the Node Manager config file (config.ini)
 cat > /opt/mysqlcluster/deploy/conf/config.ini <<- EOF
 [ndb_mgmd]
 hostname=$master_hostname

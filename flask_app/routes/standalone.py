@@ -2,11 +2,30 @@ from flask import Blueprint
 import subprocess, time, utils, logging
 
 
+
+
+
+# --------------------------------------------------------------------------- #
+# INIT                                                                        #
+# --------------------------------------------------------------------------- #
+
 standalone_bp = Blueprint('standalone', __name__)
 
 
+
+
+
+# --------------------------------------------------------------------------- #
+# ROUTES                                                                      #
+# --------------------------------------------------------------------------- #
+
 @standalone_bp.route("/benchmark", methods=["GET"])
 def benchmark() -> tuple[str, int]:
+    '''
+    The /benchmark route implementation.
+
+    Runs the benchmark and returns the parsed results of it.
+    '''
 
     # Clean the database
     logging.info('Cleaning the database...')

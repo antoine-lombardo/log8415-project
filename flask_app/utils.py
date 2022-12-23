@@ -1,29 +1,54 @@
-from typing import Dict, List
-from flask import request
 import subprocess, requests, time, logging, os, json, paramiko, io, sqlparse
+from typing import Dict, List, Any
+from flask import request
 
 
 
-def base_url() -> str:
-    return request.scheme + '://' + request.host
+
 
 def client_ip() -> str:
+    '''
+    Returns the IP address of the the client making the request.
+    Will also work behind CloudFlare (cf-connecting-ip header).
+        
+        Returns:
+            ip_address (str): The client IP address.
+    '''
+
     client_ip = request.headers.get('cf-connecting-ip')
     if client_ip is None:
         client_ip = request.remote_addr
     return client_ip
 
-def get_cluster_status() -> Dict[str, str]:
-    # Get the status
+
+
+
+
+def get_cluster_status() -> Dict[str, Any]:
+    '''
+    Returns the cluster status in the following format:
+        {
+            'slaves': [bool, bool, bool],
+            'manager': bool,
+            'mysqld': bool
+        }
+    If every service status is True, that means that the cluster is ready to
+    handle queries.
+        
+        Returns:
+            cluster_statuts (Dict): The cluster status.
+    '''
+    
+    # Get raw status from the mgmd process
     output = subprocess.run(['/scripts/cluster/setup/master/check_status.sh'], stdout=subprocess.PIPE, timeout=10).stdout.decode('utf-8')
 
+    # Parse the raw status
     status = {
         'slaves': [],
         'manager': {},
         'mysqld': {}
     }
     section = ''
-    # Parse the output
     for line in output.split('\n'):
         if '[ndbd(NDB)]' in line:
             section = 'ndbd'
@@ -42,8 +67,26 @@ def get_cluster_status() -> Dict[str, str]:
             status['mysqld'] = 'not connected' not in line
     return status
 
-def ensure_slaves_are_up(slaves: List[str], hostname: str):
+
+
+
+
+def ensure_slaves_are_up(slaves: List[str], hostname: str) -> str:
+    '''
+    Ensures that all the slaves are up. If a slave is down, it will try to
+    turn it on by sending a /start GET request to it.
+
+        Parameters:
+            slaves (List[str]): The list of all the slaves private DNS
+            hostname (str): The master node private DNS
+        
+        Returns:
+            error_msg (str): The error message, or None
+    '''
+    
     status = get_cluster_status()
+
+    # If any slave node is disconnected, try to connect it
     if len(status['slaves']) < len(slaves) or not all(status['slaves']):
         for i in range(len(slaves)):
             if len(status['slaves']) < len(slaves) or not status['slaves'][i]:
@@ -51,9 +94,11 @@ def ensure_slaves_are_up(slaves: List[str], hostname: str):
                     url=f'http://{slaves[i]}/start/{hostname}',
                     timeout=60
                 )
+                # An error code from the slave node means we cannot connect it
                 if resp.status_code != 200 or not resp.json()['connected']:
                     return 'An error occured trying to start slave #{}.'.format(i+1)
-        # Check if slaves are started, max retries = 10
+        
+        # Verify afterwards if all the slave nodes are really up
         all_started = False
         for i in range(10):
             status = get_cluster_status()
@@ -64,11 +109,27 @@ def ensure_slaves_are_up(slaves: List[str], hostname: str):
                 break
         if not all_started:
             return 'One or more slave is unable to connect to the master.'
+
     return None
 
-def ensure_mysqld_is_up():
+
+
+
+
+def ensure_mysqld_is_up() -> str:
+    '''
+    Ensures that the mysqld service is up and running.
+        
+        Returns:
+            error_msg (str): The error message, or None
+    '''
+
     status = get_cluster_status()
+
+    # If the service is down, try to turn it on
     if not status['mysqld']:
+
+        # Turn mysqld on
         try:
             logging.info('Starting mysqld...')
             subprocess.run(['/scripts/cluster/setup/master/start_mysqld.sh'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=20)
@@ -86,21 +147,37 @@ def ensure_mysqld_is_up():
                 break
         if not mysqld_started:
             return 'Failed to start mysqld.'
+        
+        # Run the secure_installation script
         try:
             logging.info('Securing the mysql database...')
             subprocess.run(['/scripts/cluster/setup/master/secure_mysql.sh'], stdout=subprocess.PIPE, timeout=20)
         except:
             subprocess.run(['killall', 'mysqld'], stdout=subprocess.PIPE)
             return 'Failed to secure the mysql installation.'
+
+        # Add an external user
         try:
             logging.info('Adding the database user...')
             subprocess.run(['/scripts/cluster/setup/master/create_myapp_user.sh'], stdout=subprocess.PIPE, timeout=10)
         except:
             subprocess.run(['killall', 'mysqld'], stdout=subprocess.PIPE)
             return 'Failed to create the database user.'
+        
     return None
 
+
+
+
+
 def clean_db():
+    '''
+    Wipes the database and re-initialize it.
+        
+        Returns:
+            error_msg (str): The error message, or None
+    '''
+
     try:
         logging.info('Cleaning database...')
         subprocess.run(['/scripts/cluster/benchmark/clean_db.sh'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=20)
@@ -108,7 +185,21 @@ def clean_db():
         return 'Failed to clean database.'
     return None
 
+
+
+
+
 def parse_benchmark(lines: List[str]) -> Dict:
+    '''
+    Parse the raw output of the sysbench tool. Returns a clean Dict.
+
+        Parameters:
+            lines (List[str]): All the stdout lines emitted by sysbench
+        
+        Returns:
+            results (Dict): The parsed results
+    '''
+
     output = {
         'sql_statistics': {
             'queries_performed': {
@@ -207,7 +298,20 @@ def parse_benchmark(lines: List[str]) -> Dict:
     return output
 
 
-def load_private_key(name: str) -> str:
+
+
+
+def load_private_key(name: str) -> paramiko.RSAKey:
+    '''
+    Loads a private key from a local keypair file.
+
+        Parameters:
+            name (str): The keypair name
+        
+        Returns:
+            key (RSAKey): The private key
+    '''
+
     if not os.path.isfile(f'/keypairs/{name}.json'):
         return None
     keypair = None
@@ -215,7 +319,21 @@ def load_private_key(name: str) -> str:
         keypair = json.load(file)
     return paramiko.RSAKey.from_private_key(io.StringIO(keypair['KeyMaterial']))
 
+
+
+
+
 def is_valid_query(query: str) -> bool:
+    '''
+    Verify if a SQL query is valid or not.
+
+        Parameters:
+            query (str): The query.
+        
+        Returns:
+            validity (bool): If the query is valid or not.
+    '''
+
     try:
         parsed_queries = sqlparse.parse(query)
         if len(parsed_queries) > 0:
@@ -227,7 +345,20 @@ def is_valid_query(query: str) -> bool:
     except:
         return False
 
+
+
+
+
 def is_write_query(query: str) -> bool:
+    '''
+    Verify if a SQL query does write operations.
+
+        Parameters:
+            query (str): The query.
+        
+        Returns:
+            does_writes (bool): If the query does wirte operations.
+    '''
     parsed_queries = sqlparse.parse(query)
     for parsed_query in parsed_queries:
         if parsed_query.get_type() in ('INSERT', 'UPDATE', 'DELETE', 'CREATE', 'ALTER', 'DROP', 'TRUNCATE'):

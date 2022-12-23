@@ -1,5 +1,6 @@
 #!/bin/bash
 
+# Secure the MySQL install
 cd /opt/mysqlcluster/home/mysqlc
 SECURE_MYSQL=$(expect -c "
 set timeout 10

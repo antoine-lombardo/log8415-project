@@ -3,7 +3,22 @@ from typing import Dict
 from boto3_type_annotations.ec2 import Client, ServiceResource
 
 
+
+
+
 def initialize_keypair(ec2_client: Client, ec2_service_resource: ServiceResource, name: str) -> Dict:
+    '''
+    Initializes a keypair. This function will retrieve the keypair locally if
+    it exists or will create one if needed.
+    
+        Parameters:
+            ec2_client (Client):                    The EC2 client object
+            ec2_service_resource (ServiceResource): The EC2 service resource object
+            name (str):                             The keypair name
+
+        Returns:
+            keypair (Dict): A dictionary with all the keypair informations.
+    '''
     
     # Try to retrieve the key locally
     keypair_path = f'keypairs/{name}.json'

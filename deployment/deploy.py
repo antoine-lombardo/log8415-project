@@ -1,16 +1,12 @@
-
-import boto3
-import logging
-import requests
-import time
+import boto3, logging, aws.security_groups, aws.instances, aws.keypairs
 from boto3_type_annotations.ec2 import ServiceResource as ec2ServiceResource
 from boto3_type_annotations.ec2 import Client as ec2Client
-from boto3_type_annotations.ec2 import Instance as ec2Instance
-import aws.security_groups, aws.instances, aws.keypairs
+
+
+
+
 
 # Constants
-SECURITY_GROUP_NAME = 'tp1'
-MASTER_INSTANCE = {}
 INSTANCE_INFOS = {
     'standalone':
     {
@@ -54,7 +50,7 @@ INSTANCE_INFOS = {
     }
 }
 
-def deploy() -> ec2Instance:
+def deploy():
     '''
     Deploy the whole EC2 environment.
     '''
@@ -107,7 +103,6 @@ def deploy() -> ec2Instance:
     # Create the standalone instance
     stdaln_instance = aws.instances.create_instances(
         ec2_service_resource,
-        ec2_client,
         INSTANCE_INFOS['standalone'],
         standalone_security_group,
         keypair
@@ -116,7 +111,6 @@ def deploy() -> ec2Instance:
     # Create Slaves instances (must be created before the Master)
     slaves_instances = aws.instances.create_instances(
         ec2_service_resource,
-        ec2_client,
         INSTANCE_INFOS['slaves'],
         slaves_security_group,
         keypair
@@ -128,7 +122,6 @@ def deploy() -> ec2Instance:
         slave_hostnames.append(slave_instance.private_dns_name)
     master_instance = aws.instances.create_instances(
         ec2_service_resource,
-        ec2_client,
         INSTANCE_INFOS['master'],
         master_security_group,
         keypair,
@@ -142,7 +135,6 @@ def deploy() -> ec2Instance:
     cluster_hostnames.append(stdaln_instance.private_dns_name)
     proxy_instance = aws.instances.create_instances(
         ec2_service_resource,
-        ec2_client,
         INSTANCE_INFOS['proxy'],
         proxy_security_group,
         keypair,
@@ -152,7 +144,6 @@ def deploy() -> ec2Instance:
     # Create the Gatekeeper instance
     gatekeeper_instance = aws.instances.create_instances(
         ec2_service_resource,
-        ec2_client,
         INSTANCE_INFOS['gatekeeper'],
         gatekeeper_security_group,
         keypair,

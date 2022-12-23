@@ -2,15 +2,16 @@ import logging, utils, consts
 from flask import Flask, request
 
 
-logging.basicConfig(
-    level=logging.INFO, 
-    format='%(asctime)s - %(levelname)s - %(message)s', 
-    datefmt='%Y-%m-%d %H:%M:%S')
-
 
 # --------------------------------------------------------------------------- #
 # INIT                                                                        #
 # --------------------------------------------------------------------------- #
+
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO, 
+    format='%(asctime)s - %(levelname)s - %(message)s', 
+    datefmt='%Y-%m-%d %H:%M:%S')
 
 # Configure the Flask app
 app = Flask('log8415-project')
@@ -19,20 +20,28 @@ logging.getLogger('werkzeug').setLevel(logging.ERROR)
 logging.getLogger('waitress').setLevel(logging.INFO)
 
 
+
+
+
 # --------------------------------------------------------------------------- #
 # OUTPUT SESSION INFOS                                                        #
 # --------------------------------------------------------------------------- #
 app.logger.info(f'App started in mode: {consts.APP_MODE}')
 
 
+
+
+
 # --------------------------------------------------------------------------- #
 # UTILS                                                                       #
 # --------------------------------------------------------------------------- #
-
 @app.after_request
 def log_the_request(response):
     app.logger.info('{} - {} - {}'.format(utils.client_ip().center(15), response.status_code, request.path))
     return response
+
+
+
 
 
 # --------------------------------------------------------------------------- #
@@ -47,6 +56,9 @@ def PING() -> tuple[str, int]:
 
     """
     return 'pong!', 200
+
+
+
 
 
 # --------------------------------------------------------------------------- #
@@ -72,6 +84,9 @@ elif consts.APP_MODE == 'PROXY':
 elif consts.APP_MODE == 'GATEKEEPER':
     from routes.gatekeeper import gtkpr_bp
     app.register_blueprint(gtkpr_bp)
+
+
+
 
 
 # Start in production mode

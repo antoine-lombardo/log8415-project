@@ -1,7 +1,6 @@
 import os, logging, time, json
-from typing import Dict, List
-import boto3
-from boto3_type_annotations.ec2 import ServiceResource, SecurityGroup, Instance, waiter, Client
+from typing import Any, Dict, List
+from boto3_type_annotations.ec2 import ServiceResource, SecurityGroup, Instance, Client
 
 
 
@@ -19,7 +18,9 @@ with open(os.path.join(dir_path, USER_DATA_SCRIPT_FILE)) as file:
 
 def delete_all_instances(ec2: ServiceResource):
     '''
+
     Deletes all running instances
+    
         Parameters:
             ec2 (ServiceResource): The EC2 service resource object
     '''
@@ -37,12 +38,18 @@ def delete_all_instances(ec2: ServiceResource):
 
 
 
-def create_instances(ec2: ServiceResource, ec2_client: Client, instances_infos: Dict[str, str], security_group: SecurityGroup, keypair: Dict, setup_args: List[str] = []) -> List[Instance]:
+def create_instances(
+    ec2:                ServiceResource,
+    instances_infos:    Dict[str, Any], 
+    security_group:     SecurityGroup, 
+    keypair:            Dict, 
+    setup_args:         List[str] = []
+    ) -> List[Instance]:
     '''
     Creates EC2 instances
+
         Parameters:
             ec2 (ServiceResource):          The EC2 service resource object
-            ec2_client (Client):            The EC2 client object
             instances_infos (Dict):         The instances infos
             security_group (SecurityGroup): The security group to be applied to the instance
             keypair (Dict):                 The keypair to be used for authenticating to the instances
@@ -97,12 +104,14 @@ def create_instances(ec2: ServiceResource, ec2_client: Client, instances_infos: 
     
     # Name each instance
     for i in range(n):
-        logging.info('  {}: Adding tags...'.format(names[i]))
+        logging.info('  {}: Naming...'.format(names[i]))
         ec2.create_tags(
             Resources=[instances[i].id], 
             Tags=[{'Key': 'Name', 'Value': names[i]}])
+        logging.info('  {}: Named.'.format(names[i]))
     
     # Wait for all instances to be running
+    # (This step is necessary to get the DNSs)
     for i in range(n):
         logging.info('  {}: Starting...'.format(names[i]))
         wait_for_running(instances[i])
@@ -123,6 +132,7 @@ def create_instances(ec2: ServiceResource, ec2_client: Client, instances_infos: 
 def wait_for_running(instance: Instance):
     '''
     Waits for an instance to be running.
+
         Parameters:
             instance (Instance): The instance to wait for
     '''
@@ -136,6 +146,7 @@ def wait_for_running(instance: Instance):
 def wait_for_initialized(client: Client, instance: Instance):
     '''
     Waits for an instance to be initialized.
+
         Parameters:
             client (Client):     The EC2 client object
             instance (Instance): The instance to wait for
@@ -180,6 +191,7 @@ def wait_for_initialized(client: Client, instance: Instance):
 def retrieve_instances(ec2: ServiceResource) -> List[Instance]:
     '''
     Retrieves all running instances.
+
         Parameters:
             ec2 (ServiceResource): The EC2 service resource object
         
@@ -200,13 +212,14 @@ def retrieve_instances(ec2: ServiceResource) -> List[Instance]:
 def retrieve_instance(ec2: ServiceResource, name: str) -> Instance:
     '''
     Retrieve the instance with the name provided.
+
         Parameters:
             ec2 (ServiceResource): The EC2 service resource object
         
         Returns:
             instance (Instance): The matching instance, or None
     '''
-    
+
     for instance in ec2.instances.all():
         if instance.state['Name'] != 'terminated':
             for tag in instance.tags:

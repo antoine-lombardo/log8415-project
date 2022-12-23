@@ -2,20 +2,36 @@ from flask import Blueprint
 import utils, subprocess, time, consts, logging
 
 
+
+
+
+# --------------------------------------------------------------------------- #
+# INIT                                                                        #
+# --------------------------------------------------------------------------- #
+
 logging.info( '------------ Private hostnames ------------')
 logging.info(f'Slave 1 hostname: {consts.SLAVES[0]}')
 logging.info(f'Slave 2 hostname: {consts.SLAVES[1]}')
 logging.info(f'Slave 3 hostname: {consts.SLAVES[2]}')
-
-
 master_bp = Blueprint('master', __name__)
+
+
+
+
+
+# --------------------------------------------------------------------------- #
+# ROUTES                                                                      #
+# --------------------------------------------------------------------------- #
+
 @master_bp.route('/start', methods=["GET"])
 def start() -> tuple[str, int]:
-    """
+    '''
+    The /start route implementation.
 
-    Starts the Master node.
+    This will try to start all necessary services for the cluster to work.
 
-    """
+    It responds with the cluster status.
+    '''
 
     # Check the current status
     status = utils.get_cluster_status()
@@ -44,8 +60,15 @@ def start() -> tuple[str, int]:
 
 
 
+
+
 @master_bp.route('/benchmark', methods=["GET"])
 def benchmark() -> tuple[str, int]:
+    '''
+    The /benchmark route implementation.
+
+    Runs the benchmark and returns the parsed results of it.
+    '''
 
     # Check the current status
     status = utils.get_cluster_status()
