@@ -2,3 +2,4 @@ __pycache__/
 .vscode/
 venv/
 kp-main.json
+script.sh
