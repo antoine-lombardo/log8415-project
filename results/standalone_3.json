@@ -1,0 +1,35 @@
+{
+    "general_statistics": {
+        "total_number_of_events": 12965,
+        "total_time": 60.0238
+    },
+    "latency": {
+        "95th_percentile": 38.94,
+        "avg": 27.77,
+        "max": 125.16,
+        "min": 9.23,
+        "sum": 360002.4
+    },
+    "sql_statistics": {
+        "ignored_errors": 10,
+        "ignored_errors_per_sec": 0.17,
+        "queries": 259466,
+        "queries_per_sec": 4322.57,
+        "queries_performed": {
+            "other": 25940,
+            "read": 181650,
+            "total": 259466,
+            "write": 51876
+        },
+        "reconnects": 0,
+        "reconnects_per_sec": 0.0,
+        "transactions": 12965,
+        "transactions_per_sec": 215.99
+    },
+    "threads_fairness": {
+        "events_avg": 2160.8333,
+        "events_stddev": 1.77,
+        "execution_time_avg": 60.0004,
+        "execution_time_stddev": 0.0
+    }
+}
